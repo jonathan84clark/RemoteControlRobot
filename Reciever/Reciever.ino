@@ -8,27 +8,25 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-RF24 radio(8, 10); // CE, CSN
+RF24 radio(9, 10); // CE, CSN
 const byte address[6] = "39421";
+boolean lights_on = false;
+boolean last_state = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() 
 {
    Serial.begin(9600);
+   pinMode(A1, OUTPUT);
+   pinMode(A2, OUTPUT);
+   pinMode(A3, OUTPUT);
+   pinMode(A4, OUTPUT);
 
-   pinMode(9, OUTPUT);
+   pinMode(8, OUTPUT);
    pinMode(6, OUTPUT);
 
    pinMode(3, OUTPUT);
    pinMode(5, OUTPUT);
-
-   // Left Forward
-   //digitalWrite(9, HIGH);
-   //digitalWrite(6, LOW);
-
-   //
-   //digitalWrite(3, HIGH);
-   //digitalWrite(5, LOW);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -41,30 +39,73 @@ void loop()
    if (radio.available())              //Looking for the data.
    {
       radio.read(&data, sizeof(data));    //Reading the data
-      if (data[4] == 0 && data[5] > 50)
+      
+      if (data[4] == 0 && data[5] > 150)
       {
-         digitalWrite(3, HIGH);
-         digitalWrite(5, LOW);
+          // Left Forward
+          digitalWrite(8, HIGH);
+          digitalWrite(6, LOW);
 
-         digitalWrite(9, HIGH);
-         digitalWrite(6, LOW);
+          // Right forward
+          digitalWrite(3, HIGH);
+          digitalWrite(5, LOW);
       }
-      else if (data[4] == 1 && data[5] > 50)
+      else if (data[4] == 1 && data[5] > 150)
       {
+          // Left Forward
+         digitalWrite(8, LOW);
+         digitalWrite(6, HIGH);
+
+         // Right forward
          digitalWrite(3, LOW);
          digitalWrite(5, HIGH);
-
-         digitalWrite(9, LOW);
-         digitalWrite(6, HIGH);
       }
-      else
+      else if (data[2] == 0 && data[3] > 150)
       {
+          // Left Forward
+         digitalWrite(8, HIGH);
+         digitalWrite(6, LOW);
+
+         // Right forward
+         digitalWrite(3, LOW);
+         digitalWrite(5, HIGH);
+      }
+      else if (data[2] == 1 && data[3] > 150)
+      {
+          // Left Forward
+         digitalWrite(8, LOW);
+         digitalWrite(6, HIGH);
+
+         // Right forward
+         digitalWrite(3, HIGH);
+         digitalWrite(5, LOW);
+      }
+      else if (data[5] <= 150 && data[3] < 150)
+      {
+         // Left Forward
+         digitalWrite(8, LOW);
+         digitalWrite(6, LOW);
+
+         // Right forward
          digitalWrite(3, LOW);
          digitalWrite(5, LOW);
-
-         digitalWrite(9, LOW);
-         digitalWrite(6, LOW);
       }
+      //else if (data[2] == 0 && data[3] > 50)
+      //{
+         //analogWrite(3, 0);
+         //analogWrite(5, data[3]);
+
+         //analogWrite(9, data[3]);
+         //analogWrite(6, 0);
+      //}
+      //else if (data[2] == 1 && data[3] > 50)
+      //{
+         //analogWrite(3, data[3]);
+         //analogWrite(5, 0);
+
+         //analogWrite(9, 0);
+         //analogWrite(6, data[3]);
+      //}
       
       delay(5);
    } 

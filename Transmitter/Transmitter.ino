@@ -60,53 +60,30 @@ void loop()
       joystickYAdjusted *= -1.0;
       yDir = 1;
     }
+    buttonRegister = 0x00;
     if (digitalRead(A2) == 1)
     {
        buttonRegister |= 0x01;
-    }
-    else
-    {
-       buttonRegister &= ~0x01;
     }
     if (digitalRead(2) == 0)
     {
        buttonRegister |= 0x02;
     }
-    else
-    {
-       buttonRegister &= ~0x02;
-    }
     if (digitalRead(3) == 0)
     {
        buttonRegister |= 0x04;
-    }
-    else
-    {
-       buttonRegister &= ~0x04;
     }
     if (digitalRead(4) == 0)
     {
        buttonRegister |= 0x08;
     }
-    else
-    {
-       buttonRegister &= ~0x08;
-    }
     if (digitalRead(5) == 0)
     {
        buttonRegister |= 0x10;
     }
-    else
-    {
-       buttonRegister &= ~0x10;
-    }
     if (digitalRead(6) == 0)
     {
        buttonRegister |= 0x20;
-    }
-    else
-    {
-       buttonRegister &= ~0x20;
     }
 
     // Now we packetize it
