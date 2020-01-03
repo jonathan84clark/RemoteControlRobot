@@ -90,22 +90,6 @@ void loop()
          digitalWrite(3, LOW);
          digitalWrite(5, LOW);
       }
-      //else if (data[2] == 0 && data[3] > 50)
-      //{
-         //analogWrite(3, 0);
-         //analogWrite(5, data[3]);
-
-         //analogWrite(9, data[3]);
-         //analogWrite(6, 0);
-      //}
-      //else if (data[2] == 1 && data[3] > 50)
-      //{
-         //analogWrite(3, data[3]);
-         //analogWrite(5, 0);
-
-         //analogWrite(9, 0);
-         //analogWrite(6, data[3]);
-      //}
       
       delay(5);
    } 
