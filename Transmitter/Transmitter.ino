@@ -30,7 +30,7 @@ byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
 
 void setup() 
 {
-    //Serial.begin(9600);
+    Serial.begin(9600);
     pinMode(A7, OUTPUT);
     pinMode(A6, OUTPUT);
     pinMode(A5, OUTPUT);

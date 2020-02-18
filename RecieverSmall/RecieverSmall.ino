@@ -8,31 +8,37 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-RF24 radio(9, 10); // CE, CSN
+RF24 radio(10, 9); // CE, CSN
 long msTicks = 0;
 long timeoutTime = 0;
 long debounceTime = 0;
+unsigned long nextReadTime = 0;
+unsigned long pulseDownTime = 0;
+unsigned long delta = 0;
+unsigned long startMicros = 0;
+boolean phase = false;
+boolean pulseDone = false;
 
 const byte address[6] = "39421";
 boolean lights_on = false;
 boolean last_state = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-#define LEFT_A 8
-#define LEFT_B 6
+#define LEFT_A 3
+#define LEFT_B 5
 
-#define RIGHT_A 3
-#define RIGHT_B 5
+#define RIGHT_A 6
+#define RIGHT_B 7
 
-#define WHITE_HEADLIGHTS A1
-#define SECOND_HEADLIGHTS A2
-#define BUZZER 4
+#define WHITE_HEADLIGHTS A3
+
+#define SENSOR_TRIGGER A0
+#define SENSOR_ECHO 2
 
 void setup() 
 {
    Serial.begin(9600);
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
-   pinMode(SECOND_HEADLIGHTS, OUTPUT);
 
    pinMode(LEFT_A, OUTPUT);
    pinMode(LEFT_B, OUTPUT);
@@ -40,7 +46,8 @@ void setup()
    pinMode(RIGHT_A, OUTPUT);
    pinMode(RIGHT_B, OUTPUT);
 
-   pinMode(BUZZER, OUTPUT);
+   pinMode(SENSOR_TRIGGER, OUTPUT);
+   attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -54,7 +61,6 @@ void loop()
    if (radio.available())              //Looking for the data.
    {
       radio.read(&data, sizeof(data));    //Reading the data
-      Serial.println(data[5]);
       if (data[4] == 0 && data[5] > 150)
       {
           // Left Forward
@@ -110,27 +116,29 @@ void loop()
           if (lights_on)
           {
               digitalWrite(WHITE_HEADLIGHTS, LOW);
-              digitalWrite(SECOND_HEADLIGHTS, LOW);
               lights_on = false;
           }
           else
           {
               digitalWrite(WHITE_HEADLIGHTS, HIGH);
-              digitalWrite(SECOND_HEADLIGHTS, HIGH);
               lights_on = true;
           }
           debounceTime = msTicks + 500;
       }
-      if ((data[6] & 0x01) == 0x01)
-      {
-          digitalWrite(BUZZER, HIGH);
-      }
-      else
-      {
-          digitalWrite(BUZZER, LOW);
-      }
       timeoutTime = msTicks + 500;
       delay(5);
+   }
+   if (nextReadTime < msTicks || pulseDone)
+   {
+     float distInch = delta / 148;
+     pulseDone = false;
+     phase = false;
+     digitalWrite(SENSOR_TRIGGER, LOW);
+     delayMicroseconds(5);
+     digitalWrite(SENSOR_TRIGGER, HIGH);
+     delayMicroseconds(10);
+     digitalWrite(SENSOR_TRIGGER, LOW);
+     nextReadTime = msTicks + 50;
    }
    if (timeoutTime < msTicks)
    {
@@ -139,9 +147,20 @@ void loop()
       digitalWrite(LEFT_A, LOW);
       digitalWrite(LEFT_B, LOW);
       digitalWrite(WHITE_HEADLIGHTS, LOW);
-      digitalWrite(SECOND_HEADLIGHTS, LOW);
-      digitalWrite(BUZZER, LOW);
    }
+}
 
-    
+void echoIsr() 
+{
+   if (phase)
+   {
+      delta = micros() - startMicros;
+      phase = false;
+      pulseDone = true;
+   }
+   else
+   {
+      startMicros = micros();
+      phase = true;
+   }
 }
