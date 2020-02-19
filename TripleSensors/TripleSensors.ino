@@ -30,9 +30,15 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define RIGHT_A 6
 #define RIGHT_B 7
 
-#define WHITE_HEADLIGHTS A3
+#define WHITE_HEADLIGHTS 4
 
-#define SENSOR_TRIGGER A0
+#define SENSOR_TRIGGER_L A4
+#define SENSOR_TRIGGER_M A3
+#define SENSOR_TRIGGER_R A2
+
+#define SENSOR_ENABLE_L A7
+#define SENSOR_ENABLE_M A6
+#define SENSOR_ENABLE_R A5
 #define SENSOR_ECHO 2
 
 void setup() 
@@ -46,7 +52,20 @@ void setup()
    pinMode(RIGHT_A, OUTPUT);
    pinMode(RIGHT_B, OUTPUT);
 
-   pinMode(SENSOR_TRIGGER, OUTPUT);
+   pinMode(SENSOR_TRIGGER_L, OUTPUT);
+   pinMode(SENSOR_TRIGGER_M, OUTPUT);
+   pinMode(SENSOR_TRIGGER_R, OUTPUT);
+   pinMode(SENSOR_ENABLE_L, OUTPUT);
+   pinMode(SENSOR_ENABLE_M, OUTPUT);
+   pinMode(SENSOR_ENABLE_R, OUTPUT);
+
+   digitalWrite(SENSOR_TRIGGER_L, LOW);
+   digitalWrite(SENSOR_TRIGGER_M, LOW);
+   digitalWrite(SENSOR_TRIGGER_R, LOW);
+   digitalWrite(SENSOR_ENABLE_L, LOW);
+   digitalWrite(SENSOR_ENABLE_M, LOW);
+   digitalWrite(SENSOR_ENABLE_R, LOW);
+
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
@@ -134,11 +153,13 @@ void loop()
      Serial.println(distInch);
      pulseDone = false;
      phase = false;
-     digitalWrite(SENSOR_TRIGGER, LOW);
+     digitalWrite(SENSOR_ENABLE_R, HIGH);
      delayMicroseconds(5);
-     digitalWrite(SENSOR_TRIGGER, HIGH);
+     digitalWrite(SENSOR_TRIGGER_R, LOW);
+     delayMicroseconds(5);
+     digitalWrite(SENSOR_TRIGGER_R, HIGH);
      delayMicroseconds(10);
-     digitalWrite(SENSOR_TRIGGER, LOW);
+     digitalWrite(SENSOR_TRIGGER_R, LOW);
      nextReadTime = msTicks + 50;
    }
    if (timeoutTime < msTicks)
