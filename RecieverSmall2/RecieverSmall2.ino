@@ -22,6 +22,7 @@ boolean pulseDone = false;
 const byte address[6] = "39421";
 boolean lights_on = false;
 boolean last_state = false;
+boolean analogTurn = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #define TURN_A 3
@@ -50,8 +51,8 @@ void setup()
    //digitalWrite(TURN_A, LOW);
    //digitalWrite(TURN_B, HIGH);
 
-   pinMode(SENSOR_TRIGGER, OUTPUT);
-   attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
+   //pinMode(SENSOR_TRIGGER, OUTPUT);
+   //attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -64,39 +65,41 @@ void loop()
    msTicks = millis();
    if (radio.available())              //Looking for the data.
    {
+      analogTurn = false;
       radio.read(&data, sizeof(data));    //Reading the data
-      Serial.println("test");
-      if (data[4] == 0 && data[5] > 150)
+      if (data[4] == 0 && data[5] > 25)
       {
          // main motor drive
-         digitalWrite(MAIN_A, HIGH);
+         analogWrite(MAIN_A, data[5]);
          digitalWrite(MAIN_B, LOW);
       }
-      else if (data[4] == 1 && data[5] > 150)
+      else if (data[4] == 1 && data[5] > 25)
       {
          // main motor drive
-         digitalWrite(MAIN_A, LOW);
+         analogWrite(MAIN_A, 255 - data[5]);
          digitalWrite(MAIN_B, HIGH);
       }
-      else if (data[2] == 0 && data[3] > 150)
+      else
+      {
+         digitalWrite(MAIN_A, LOW);
+         digitalWrite(MAIN_B, LOW);
+      }
+      if (data[2] == 0 && data[3] > 15)
       {
           // Right Turrn
           digitalWrite(TURN_A, LOW);
-          digitalWrite(TURN_B, HIGH);
+          analogWrite(TURN_B, data[3]);
       }
-      else if (data[2] == 1 && data[3] > 150)
+      else if (data[2] == 1 && data[3] > 15)
       {
          // Left Turn
-         digitalWrite(TURN_A, HIGH);
+         analogWrite(TURN_A, data[3]);
          digitalWrite(TURN_B, LOW);
       }
-      else if (data[5] <= 150 && data[3] < 150)
+      else
       {
          digitalWrite(TURN_A, LOW);
          digitalWrite(TURN_B, LOW);
-
-         digitalWrite(MAIN_A, LOW);
-         digitalWrite(MAIN_B, LOW);
       }
       if ((data[6] & 0x10) == 0x10 && debounceTime < msTicks)
       {
@@ -122,20 +125,5 @@ void loop()
       digitalWrite(MAIN_A, LOW);
       digitalWrite(MAIN_B, LOW);
       digitalWrite(WHITE_HEADLIGHTS, LOW);
-   }
-}
-
-void echoIsr() 
-{
-   if (phase)
-   {
-      delta = micros() - startMicros;
-      phase = false;
-      pulseDone = true;
-   }
-   else
-   {
-      startMicros = micros();
-      phase = true;
    }
 }
