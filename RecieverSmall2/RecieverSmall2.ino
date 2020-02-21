@@ -25,6 +25,7 @@ boolean last_state = false;
 boolean analogTurn = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+#define THROTTLE_SCALER 0.5
 #define TURN_A 3
 #define TURN_B 5
 
@@ -67,16 +68,18 @@ void loop()
    {
       analogTurn = false;
       radio.read(&data, sizeof(data));    //Reading the data
-      if (data[4] == 0 && data[5] > 25)
+      if (data[4] == 0 && data[5] > 35)
       {
          // main motor drive
-         analogWrite(MAIN_A, data[5]);
+         int scaledValue = THROTTLE_SCALER * (float)data[5];
+         analogWrite(MAIN_A, scaledValue);
          digitalWrite(MAIN_B, LOW);
       }
-      else if (data[4] == 1 && data[5] > 25)
+      else if (data[4] == 1 && data[5] > 35)
       {
+         int scaledValue = THROTTLE_SCALER * (float)(255 - data[5]);
          // main motor drive
-         analogWrite(MAIN_A, 255 - data[5]);
+         analogWrite(MAIN_A, scaledValue);
          digitalWrite(MAIN_B, HIGH);
       }
       else
@@ -84,16 +87,30 @@ void loop()
          digitalWrite(MAIN_A, LOW);
          digitalWrite(MAIN_B, LOW);
       }
-      if (data[2] == 0 && data[3] > 15)
+      if (data[2] == 0 && data[3] > 15 || ((data[6] & 0x04) == 0x04))
       {
           // Right Turrn
           digitalWrite(TURN_A, LOW);
-          analogWrite(TURN_B, data[3]);
+          if (data[3] <= 15)
+          {
+             analogWrite(TURN_B, 255);
+          }
+          else
+          {
+             analogWrite(TURN_B, data[3]);
+          }
       }
-      else if (data[2] == 1 && data[3] > 15)
+      else if (data[2] == 1 && data[3] > 15 || ((data[6] & 0x20) == 0x20))
       {
          // Left Turn
-         analogWrite(TURN_A, data[3]);
+         if (data[3] <= 15)
+         {
+            analogWrite(TURN_A, 255);
+         }
+         else
+         {
+            analogWrite(TURN_A, data[3]);
+         }
          digitalWrite(TURN_B, LOW);
       }
       else
