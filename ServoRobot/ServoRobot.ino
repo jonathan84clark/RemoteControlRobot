@@ -19,26 +19,17 @@ unsigned long startMicros = 0;
 boolean phase = false;
 boolean pulseDone = false;
 
-const byte address[6] = "39421";
+const byte address[6] = "39423";
 boolean lights_on = false;
 boolean last_state = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-#define LEFT_A 3
-#define LEFT_B 5
+#define RIGHT_MOTOR 5
+#define LEFT_MOTOR 6
 
-#define RIGHT_A 6
-#define RIGHT_B 7
+#define WHITE_HEADLIGHTS A3
 
-#define WHITE_HEADLIGHTS 4
-
-#define SENSOR_TRIGGER_L A4
-#define SENSOR_TRIGGER_M A3
-#define SENSOR_TRIGGER_R A2
-
-#define SENSOR_ENABLE_L A7
-#define SENSOR_ENABLE_M A6
-#define SENSOR_ENABLE_R A5
+#define SENSOR_TRIGGER A0
 #define SENSOR_ECHO 2
 
 void setup() 
@@ -46,26 +37,10 @@ void setup()
    Serial.begin(9600);
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
 
-   pinMode(LEFT_A, OUTPUT);
-   pinMode(LEFT_B, OUTPUT);
+   pinMode(RIGHT_MOTOR, OUTPUT);
+   pinMode(LEFT_MOTOR, OUTPUT);
 
-   pinMode(RIGHT_A, OUTPUT);
-   pinMode(RIGHT_B, OUTPUT);
-
-   pinMode(SENSOR_TRIGGER_L, OUTPUT);
-   pinMode(SENSOR_TRIGGER_M, OUTPUT);
-   pinMode(SENSOR_TRIGGER_R, OUTPUT);
-   pinMode(SENSOR_ENABLE_L, OUTPUT);
-   pinMode(SENSOR_ENABLE_M, OUTPUT);
-   pinMode(SENSOR_ENABLE_R, OUTPUT);
-
-   digitalWrite(SENSOR_TRIGGER_L, LOW);
-   digitalWrite(SENSOR_TRIGGER_M, LOW);
-   digitalWrite(SENSOR_TRIGGER_R, LOW);
-   digitalWrite(SENSOR_ENABLE_L, LOW);
-   digitalWrite(SENSOR_ENABLE_M, LOW);
-   digitalWrite(SENSOR_ENABLE_R, LOW);
-
+   pinMode(SENSOR_TRIGGER, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
@@ -80,49 +55,30 @@ void loop()
    if (radio.available())              //Looking for the data.
    {
       radio.read(&data, sizeof(data));    //Reading the data
-      // Forward
       if (data[4] == 0 && data[5] > 150)
       {
-         digitalWrite(LEFT_A, HIGH);
-         digitalWrite(LEFT_B, LOW);
-
-         digitalWrite(RIGHT_A, LOW);
-         digitalWrite(RIGHT_B, HIGH);
+          analogWrite(LEFT_MOTOR, 240);
+          analogWrite(RIGHT_MOTOR, 10);
       }
-      // Reverse
       else if (data[4] == 1 && data[5] > 150)
       {
-         digitalWrite(LEFT_A, LOW);
-         digitalWrite(LEFT_B, HIGH);
-
-         digitalWrite(RIGHT_A, HIGH);
-         digitalWrite(RIGHT_B, LOW);
+          analogWrite(LEFT_MOTOR, 10);
+          analogWrite(RIGHT_MOTOR, 240);
       }
-      // Left
       else if (data[2] == 0 && data[3] > 150)
       {
-          digitalWrite(LEFT_A, HIGH);
-          digitalWrite(LEFT_B, LOW);
-
-          digitalWrite(RIGHT_A, HIGH);
-          digitalWrite(RIGHT_B, LOW);
+          analogWrite(LEFT_MOTOR, 240);
+          analogWrite(RIGHT_MOTOR, 240);
       }
-      // Right
       else if (data[2] == 1 && data[3] > 150)
       {
-         digitalWrite(LEFT_A, LOW);
-         digitalWrite(LEFT_B, HIGH);
-
-         digitalWrite(RIGHT_A, LOW);
-         digitalWrite(RIGHT_B, HIGH);
+          analogWrite(LEFT_MOTOR, 10);
+          analogWrite(RIGHT_MOTOR, 10);
       }
       else if (data[5] <= 150 && data[3] < 150)
       {
-         digitalWrite(LEFT_A, LOW);
-         digitalWrite(LEFT_B, LOW);
-
-         digitalWrite(RIGHT_A, LOW);
-         digitalWrite(RIGHT_B, LOW);
+          analogWrite(LEFT_MOTOR, 0);
+          analogWrite(RIGHT_MOTOR, 0);
       }
       if ((data[6] & 0x10) == 0x10 && debounceTime < msTicks)
       {
@@ -147,22 +103,18 @@ void loop()
      Serial.println(distInch);
      pulseDone = false;
      phase = false;
-     digitalWrite(SENSOR_ENABLE_R, HIGH);
+     digitalWrite(SENSOR_TRIGGER, LOW);
      delayMicroseconds(5);
-     digitalWrite(SENSOR_TRIGGER_R, LOW);
-     delayMicroseconds(5);
-     digitalWrite(SENSOR_TRIGGER_R, HIGH);
+     digitalWrite(SENSOR_TRIGGER, HIGH);
      delayMicroseconds(10);
-     digitalWrite(SENSOR_TRIGGER_R, LOW);
+     digitalWrite(SENSOR_TRIGGER, LOW);
      nextReadTime = msTicks + 50;
    }
    if (timeoutTime < msTicks)
    {
-      digitalWrite(RIGHT_A, LOW);
-      digitalWrite(RIGHT_B, LOW);
-      digitalWrite(LEFT_A, LOW);
-      digitalWrite(LEFT_B, LOW);
       digitalWrite(WHITE_HEADLIGHTS, LOW);
+      analogWrite(LEFT_MOTOR, 0);
+      analogWrite(RIGHT_MOTOR, 0);
    }
 }
 

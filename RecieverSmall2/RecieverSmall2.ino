@@ -1,9 +1,10 @@
 /***************************************************************
-* TRANSMITTER
-* DESC: The transmitter code takes data from a joystick and buttons
-* and sends a heartbeat message to the reciever.
+* RECIEVER SMALL
+* DESC: The Small reciever is an Arduino-based remote control board
+* designed to go in an RC car.
 * Author: Jonathan L Clark
 * Date: 12/22/2019
+* Update: 3/5/2020, Modified the application to work with controller B
 **************************************************************/
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -19,7 +20,7 @@ unsigned long startMicros = 0;
 boolean phase = false;
 boolean pulseDone = false;
 
-const byte address[6] = "39421";
+const byte address[6] = "39422";
 boolean lights_on = false;
 boolean last_state = false;
 boolean analogTurn = false;
@@ -48,12 +49,6 @@ void setup()
 
    pinMode(MAIN_A, OUTPUT);
    pinMode(MAIN_B, OUTPUT);
-
-   //digitalWrite(TURN_A, LOW);
-   //digitalWrite(TURN_B, HIGH);
-
-   //pinMode(SENSOR_TRIGGER, OUTPUT);
-   //attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -91,7 +86,7 @@ void loop()
       {
           // Right Turrn
           digitalWrite(TURN_A, LOW);
-          if (data[3] <= 15)
+          if ((data[6] & 0x04) == 0x04)
           {
              analogWrite(TURN_B, 255);
           }
@@ -103,7 +98,7 @@ void loop()
       else if (data[2] == 1 && data[3] > 15 || ((data[6] & 0x20) == 0x20))
       {
          // Left Turn
-         if (data[3] <= 15)
+         if ((data[6] & 0x20) == 0x20)
          {
             analogWrite(TURN_A, 255);
          }

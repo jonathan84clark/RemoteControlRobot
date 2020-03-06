@@ -1,7 +1,6 @@
 /***************************************************************
-* TRANSMITTER
-* DESC: The transmitter code takes data from a joystick and buttons
-* and sends a heartbeat message to the reciever.
+* ROBOT TANK
+* DESC: The robot tank is a small robot designed to move using tracks.
 * Author: Jonathan L Clark
 * Date: 12/22/2019
 **************************************************************/
