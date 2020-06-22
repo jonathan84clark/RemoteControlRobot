@@ -57,12 +57,12 @@ void loop()
       radio.read(&data, sizeof(data));    //Reading the data
       if (data[4] == 0 && data[5] > 150)
       {
-          analogWrite(LEFT_MOTOR, 240);
-          analogWrite(RIGHT_MOTOR, 10);
+          analogWrite(LEFT_MOTOR, 250);
+          analogWrite(RIGHT_MOTOR, 85);
       }
       else if (data[4] == 1 && data[5] > 150)
       {
-          analogWrite(LEFT_MOTOR, 10);
+          analogWrite(LEFT_MOTOR, 90);
           analogWrite(RIGHT_MOTOR, 240);
       }
       else if (data[2] == 0 && data[3] > 150)
@@ -75,7 +75,7 @@ void loop()
           analogWrite(LEFT_MOTOR, 10);
           analogWrite(RIGHT_MOTOR, 10);
       }
-      else if (data[5] <= 150 && data[3] < 150)
+      else if (data[5] <= 100 && data[3] < 150)
       {
           analogWrite(LEFT_MOTOR, 0);
           analogWrite(RIGHT_MOTOR, 0);

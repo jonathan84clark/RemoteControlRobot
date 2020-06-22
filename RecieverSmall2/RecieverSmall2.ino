@@ -72,7 +72,7 @@ void loop()
       }
       else if (data[4] == 1 && data[5] > 35)
       {
-         int scaledValue = THROTTLE_SCALER * (float)(255 - data[5]);
+         int scaledValue = 0.8 * (float)(255 - data[5]);
          // main motor drive
          analogWrite(MAIN_A, scaledValue);
          digitalWrite(MAIN_B, HIGH);
