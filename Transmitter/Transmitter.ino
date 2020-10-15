@@ -18,6 +18,8 @@ int center_y = 0;
 int center_x = 0;
 byte buttonRegister = 0x00;
 byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
+int pulse_counter = 0;
+boolean powerIsPulse = false;
 
 #define JOYSTICK_BTN A2
 #define JOYSTICK_X   A0
@@ -27,6 +29,7 @@ byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
 #define BTN_UP        4
 #define BTN_MID       5
 #define BTN_LEFT      6
+#define POWER_PULSE_PIN 7 // Power pulse pin to keep the power supply active 
 
 void setup() 
 {
@@ -42,6 +45,8 @@ void setup()
     pinMode(BTN_UP, INPUT_PULLUP);
     pinMode(BTN_MID, INPUT_PULLUP);
     pinMode(BTN_LEFT, INPUT_PULLUP);
+    pinMode(POWER_PULSE_PIN, OUTPUT);
+    digitalWrite(POWER_PULSE_PIN, HIGH);
     digitalWrite(A7, LOW);
     digitalWrite(A6, LOW);
     digitalWrite(A5, LOW);
@@ -104,6 +109,22 @@ void loop()
     {
       joystickYAdjusted = 255.0;
     }
+    // Hanlde pulsing the power supply
+    if (powerIsPulse && pulse_counter > 3)
+    {
+       powerIsPulse = false;
+       pulse_counter = 0;
+       digitalWrite(POWER_PULSE_PIN, HIGH);
+       //Serial.println("Pulse finished");
+    }
+    else if (!powerIsPulse && pulse_counter > 40)
+    {
+       powerIsPulse = true;
+       pulse_counter = 0;
+       digitalWrite(POWER_PULSE_PIN, LOW);
+       //Serial.println("Starting pulse");
+    }
+    pulse_counter++;
     
 
     // Now we packetize it
