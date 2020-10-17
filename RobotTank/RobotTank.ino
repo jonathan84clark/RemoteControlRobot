@@ -11,10 +11,12 @@ RF24 radio(9, 10); // CE, CSN
 long msTicks = 0;
 long timeoutTime = 0;
 long debounceTime = 0;
+long pulse_time = 0;
 
 const byte address[6] = "39421";
 boolean lights_on = false;
 boolean last_state = false;
+boolean pulse_end = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #define LEFT_A 8
@@ -26,6 +28,8 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define WHITE_HEADLIGHTS A1
 #define SECOND_HEADLIGHTS A2
 #define BUZZER 4
+
+#define PULSE_POWER 7
 
 void setup() 
 {
@@ -40,6 +44,9 @@ void setup()
    pinMode(RIGHT_B, OUTPUT);
 
    pinMode(BUZZER, OUTPUT);
+
+   pinMode(PULSE_POWER, OUTPUT);
+   digitalWrite(PULSE_POWER, HIGH);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -130,6 +137,23 @@ void loop()
       }
       timeoutTime = msTicks + 500;
       delay(5);
+   }
+   if (pulse_time < msTicks)
+   {
+      if (pulse_end)
+      {
+         pulse_end = false;
+         digitalWrite(PULSE_POWER, HIGH);
+         Serial.println("Pulse end");
+         pulse_time = msTicks + 8000;
+      }
+      else
+      {
+         pulse_end = true;
+         digitalWrite(PULSE_POWER, LOW);
+         Serial.println("Pulse low");
+         pulse_time = msTicks + 200;
+      }
    }
    if (timeoutTime < msTicks)
    {

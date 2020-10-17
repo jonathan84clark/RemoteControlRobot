@@ -8,6 +8,7 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include "Motor.h"
 RF24 radio(10, 9); // CE, CSN
 long msTicks = 0;
 long timeoutTime = 0;
@@ -24,8 +25,8 @@ boolean lights_on = false;
 boolean last_state = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-#define LEFT_A 3
-#define LEFT_B 5
+#define LEFT_A 5
+#define LEFT_B 3
 
 #define RIGHT_A 6
 #define RIGHT_B 7
@@ -41,16 +42,20 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define SENSOR_ENABLE_R A5
 #define SENSOR_ECHO 2
 
+Motor left(LEFT_A, LEFT_B);
+Motor right(RIGHT_A, RIGHT_B);
+
 void setup() 
 {
    Serial.begin(9600);
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
 
-   pinMode(LEFT_A, OUTPUT);
-   pinMode(LEFT_B, OUTPUT);
+   //pinMode(LEFT_A, OUTPUT);
+   //pinMode(LEFT_B, OUTPUT);
 
-   pinMode(RIGHT_A, OUTPUT);
-   pinMode(RIGHT_B, OUTPUT);
+   //pinMode(RIGHT_A, OUTPUT);
+   //pinMode(RIGHT_B, OUTPUT);
+
 
    pinMode(SENSOR_TRIGGER_L, OUTPUT);
    pinMode(SENSOR_TRIGGER_M, OUTPUT);
@@ -74,47 +79,76 @@ void setup()
    radio.startListening();              //This sets the module as receiver
 }
 
+float normalize_throttle(float input)
+{
+   if (input > 1.0)
+   {
+     input = 1.0;
+   }
+   else if (input < -1.0)
+   {
+     input = -1.0;
+   }
+   return input;
+}
+
 void loop()
 {
    msTicks = millis();
    if (radio.available())              //Looking for the data.
    {
       radio.read(&data, sizeof(data));    //Reading the data
-      // Forward
-      if (data[4] == 0 && data[5] > 150)
+      float throttle = ((float)data[5] / 255.0);
+      float yaw = ((float)data[3] / 255.0);
+      bool isTurn = false;
+      Serial.print(yaw);
+      if (yaw > throttle)
       {
-         digitalWrite(LEFT_A, HIGH);
-         digitalWrite(LEFT_B, LOW);
-
-         digitalWrite(RIGHT_A, LOW);
-         digitalWrite(RIGHT_B, HIGH);
+        isTurn = true;
       }
-      // Reverse
-      else if (data[4] == 1 && data[5] > 150)
+      if (data[2] == 1)
       {
-         digitalWrite(LEFT_A, LOW);
-         digitalWrite(LEFT_B, HIGH);
-
-         digitalWrite(RIGHT_A, HIGH);
-         digitalWrite(RIGHT_B, LOW);
+         yaw = yaw * -1.0;
       }
+      if (data[4] == 1)
+      {
+         throttle = throttle * -1.0;
+      }
+      float left_throttle = 0.0;
+      float right_throttle = 0.0;
+      if (isTurn)
+      {
+        left_throttle = yaw;
+        right_throttle = yaw * -1.0;
+      }
+      else
+      {
+        left_throttle = throttle;
+        right_throttle = throttle;
+      }
+      
+      left.TorqueCommand(left_throttle);
+      right.TorqueCommand(right_throttle);
+      Serial.print("Throttle");
+      Serial.println(throttle);
+      /*
       // Left
       else if (data[2] == 0 && data[3] > 150)
       {
-          digitalWrite(LEFT_A, HIGH);
-          digitalWrite(LEFT_B, LOW);
+          digitalWrite(LEFT_A, LOW);
+          digitalWrite(LEFT_B, HIGH);
 
-          digitalWrite(RIGHT_A, HIGH);
-          digitalWrite(RIGHT_B, LOW);
+          digitalWrite(RIGHT_A, LOW);
+          digitalWrite(RIGHT_B, HIGH);
       }
       // Right
       else if (data[2] == 1 && data[3] > 150)
       {
-         digitalWrite(LEFT_A, LOW);
-         digitalWrite(LEFT_B, HIGH);
+         digitalWrite(LEFT_A, HIGH);
+         digitalWrite(LEFT_B, LOW);
 
-         digitalWrite(RIGHT_A, LOW);
-         digitalWrite(RIGHT_B, HIGH);
+         digitalWrite(RIGHT_A, HIGH);
+         digitalWrite(RIGHT_B, LOW);
       }
       else if (data[5] <= 150 && data[3] < 150)
       {
@@ -124,6 +158,7 @@ void loop()
          digitalWrite(RIGHT_A, LOW);
          digitalWrite(RIGHT_B, LOW);
       }
+      */
       if ((data[6] & 0x10) == 0x10 && debounceTime < msTicks)
       {
           if (lights_on)
@@ -144,7 +179,7 @@ void loop()
    if (nextReadTime < msTicks || pulseDone)
    {
      float distInch = delta / 148;
-     Serial.println(distInch);
+     //Serial.println(distInch);
      pulseDone = false;
      phase = false;
      digitalWrite(SENSOR_ENABLE_R, HIGH);
