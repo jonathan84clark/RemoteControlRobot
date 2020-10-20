@@ -17,6 +17,7 @@ unsigned long nextReadTime = 0;
 unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
 unsigned long startMicros = 0;
+long nextDebugTime = 0;
 boolean phase = false;
 boolean pulseDone = false;
 float pulseTime = 0.0;
@@ -36,6 +37,7 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #define WHITE_HEADLIGHTS 4
 
+#define NUM_SENSORS 3
 #define SENSOR_TRIGGER_L A4
 #define SENSOR_TRIGGER_M A3
 #define SENSOR_TRIGGER_R A2
@@ -47,6 +49,10 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #define PULSE_PIN 8
 
+int trigger[] = {SENSOR_TRIGGER_L, SENSOR_TRIGGER_M, SENSOR_TRIGGER_R};
+int enable[] = {SENSOR_ENABLE_L, SENSOR_ENABLE_M, SENSOR_ENABLE_R};
+float sensorReadings[] = {0.0, 0.0, 0.0};
+int sensorIndex = 0;
 // Setup the drive system
 Drive drive(LEFT_A, LEFT_B, 1.0, 0.0, RIGHT_A, RIGHT_B, 1.0, 0.0, MODE_DIFF_STEER);
 
@@ -57,20 +63,13 @@ void setup()
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
 
-   pinMode(SENSOR_TRIGGER_L, OUTPUT);
-   pinMode(SENSOR_TRIGGER_M, OUTPUT);
-   pinMode(SENSOR_TRIGGER_R, OUTPUT);
-   pinMode(SENSOR_ENABLE_L, OUTPUT);
-   pinMode(SENSOR_ENABLE_M, OUTPUT);
-   pinMode(SENSOR_ENABLE_R, OUTPUT);
-
-   digitalWrite(SENSOR_TRIGGER_L, LOW);
-   digitalWrite(SENSOR_TRIGGER_M, LOW);
-   digitalWrite(SENSOR_TRIGGER_R, LOW);
-   digitalWrite(SENSOR_ENABLE_L, LOW);
-   digitalWrite(SENSOR_ENABLE_M, LOW);
-   digitalWrite(SENSOR_ENABLE_R, LOW);
-
+   for (int i = 0; i < NUM_SENSORS; i++)
+   {
+      pinMode(trigger[i], OUTPUT);
+      pinMode(enable[i], OUTPUT);
+      digitalWrite(trigger[i], LOW);
+      digitalWrite(enable[i], LOW);
+   }
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
    
    radio.begin();
@@ -108,20 +107,13 @@ void loop()
       timeoutTime = msTicks + 500;
       delay(5);
    }
+   if (nextDebugTime < msTicks)
+   {
+      DebugPrint();
+   }
    if (nextReadTime < msTicks || pulseDone)
    {
-     float distInch = delta / 148;
-     //Serial.println(distInch);
-     pulseDone = false;
-     phase = false;
-     digitalWrite(SENSOR_ENABLE_R, HIGH);
-     delayMicroseconds(5);
-     digitalWrite(SENSOR_TRIGGER_R, LOW);
-     delayMicroseconds(5);
-     digitalWrite(SENSOR_TRIGGER_R, HIGH);
-     delayMicroseconds(10);
-     digitalWrite(SENSOR_TRIGGER_R, LOW);
-     nextReadTime = msTicks + 50;
+      ReadSensors();
    }
    if (timeoutTime < msTicks)
    {
@@ -150,7 +142,53 @@ void loop()
           pulseTime = msTicks + 200;
        }
    }
-boolean powerIsPulse = false;
+}
+
+/****************************************
+* DEBUG PRINT
+* DESC: Prints debug statements about the state
+* of the system.
+****************************************/
+void DebugPrint()
+{
+  /*
+   Serial.print("Dist1: ");
+   Serial.print(sensorReadings[0]);
+   Serial.print("Dist2: ");
+   Serial.print(sensorReadings[1]);
+   Serial.print("Dist3: ");
+   Serial.println(sensorReadings[2]);
+   nextDebugTime = msTicks + 500;
+   */
+}
+
+/****************************************
+* READ SENSORS
+* DESC: Reads the ultrasonic distance sensors
+****************************************/
+void ReadSensors()
+{
+   float distInch = (float)delta / 148.0;
+   if (pulseDone) // We finished a read, cache the distance
+   {
+      sensorReadings[sensorIndex] = distInch;
+   }
+   pulseDone = false;
+   phase = false;
+   digitalWrite(enable[sensorIndex], LOW);
+   sensorIndex++;
+   if (sensorIndex == NUM_SENSORS)
+   {
+      sensorIndex = 0;
+   }
+   digitalWrite(enable[sensorIndex], HIGH);
+   delayMicroseconds(5);
+   digitalWrite(trigger[sensorIndex], LOW);
+   delayMicroseconds(5);
+   digitalWrite(trigger[sensorIndex], HIGH);
+   delayMicroseconds(10);
+   digitalWrite(trigger[sensorIndex], LOW);
+   nextReadTime = msTicks + 50;
 }
 
 void echoIsr() 
