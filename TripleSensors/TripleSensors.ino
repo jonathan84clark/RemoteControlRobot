@@ -113,7 +113,7 @@ void loop()
    }
    if (nextReadTime < msTicks || pulseDone)
    {
-      ReadSensors();
+      //ReadSensors();
    }
    if (timeoutTime < msTicks)
    {
