@@ -9,7 +9,11 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 #include "Drive.h"
+#if ROBOT_TRIPLE
 RF24 radio(10, 9); // CE, CSN
+#else
+RF24 radio(8, 10); // CE, CSN
+#endif
 long msTicks = 0;
 long timeoutTime = 0;
 long debounceTime = 0;
@@ -29,11 +33,25 @@ boolean lights_on = false;
 boolean last_state = false;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+#define ROBOT_TRIPLE 0
+#define ROBOT_FASTROV 1
+
+#if ROBOT_TRIPLE
 #define LEFT_A 5
 #define LEFT_B 3
 
 #define RIGHT_A 6
 #define RIGHT_B 7
+#define PULSE_PIN 8
+#else
+#define LEFT_A 5
+#define LEFT_B 6
+
+#define RIGHT_A 3
+#define RIGHT_B 9
+
+#define PULSE_PIN 7
+#endif
 
 #define WHITE_HEADLIGHTS 4
 
@@ -46,8 +64,6 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define SENSOR_ENABLE_M A6
 #define SENSOR_ENABLE_R A5
 #define SENSOR_ECHO 2
-
-#define PULSE_PIN 8
 
 int trigger[] = {SENSOR_TRIGGER_L, SENSOR_TRIGGER_M, SENSOR_TRIGGER_R};
 int enable[] = {SENSOR_ENABLE_L, SENSOR_ENABLE_M, SENSOR_ENABLE_R};
@@ -63,6 +79,8 @@ void setup()
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
 
+
+#if ROBOT_TRIPLE
    for (int i = 0; i < NUM_SENSORS; i++)
    {
       pinMode(trigger[i], OUTPUT);
@@ -71,6 +89,7 @@ void setup()
       digitalWrite(enable[i], LOW);
    }
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
+#endif
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data

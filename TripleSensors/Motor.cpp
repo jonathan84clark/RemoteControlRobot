@@ -79,6 +79,11 @@ void Motor::TorqueCommand(float throttle)
        analogWrite(b_control, analogValue);
        digitalWrite(a_control, LOW);
     }
+    else if (throttle == 0.0)
+    {
+       digitalWrite(b_control, LOW);
+       digitalWrite(a_control, LOW);
+    }
     else
     {
        throttle = (throttle < cutOff) ? 0.0 : throttle;
