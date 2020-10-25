@@ -18,6 +18,8 @@ unsigned long delta = 0;
 unsigned long startMicros = 0;
 boolean phase = false;
 boolean pulseDone = false;
+long pulse_time = 0;
+boolean pulse_end = false;
 
 const byte address[6] = "39423";
 boolean lights_on = false;
@@ -32,6 +34,8 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define SENSOR_TRIGGER A0
 #define SENSOR_ECHO 2
 
+#define PULSE_POWER 7
+
 void setup() 
 {
    Serial.begin(9600);
@@ -39,6 +43,9 @@ void setup()
 
    pinMode(RIGHT_MOTOR, OUTPUT);
    pinMode(LEFT_MOTOR, OUTPUT);
+
+   pinMode(PULSE_POWER, OUTPUT);
+   digitalWrite(PULSE_POWER, HIGH);
 
    pinMode(SENSOR_TRIGGER, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
@@ -109,6 +116,23 @@ void loop()
      delayMicroseconds(10);
      digitalWrite(SENSOR_TRIGGER, LOW);
      nextReadTime = msTicks + 50;
+   }
+   if (pulse_time < msTicks)
+   {
+      if (pulse_end)
+      {
+         pulse_end = false;
+         digitalWrite(PULSE_POWER, HIGH);
+         Serial.println("Pulse end");
+         pulse_time = msTicks + 8000;
+      }
+      else
+      {
+         pulse_end = true;
+         digitalWrite(PULSE_POWER, LOW);
+         Serial.println("Pulse low");
+         pulse_time = msTicks + 200;
+      }
    }
    if (timeoutTime < msTicks)
    {

@@ -13,13 +13,19 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-RF24 radio(9, 10); // CE, CSN         
-const byte address[6] = "39421";     //Byte of array representing the address. This is the address where we will send the data. This should be same on the receiving side.
+RF24 radio(9, 10); // CE, CSN
+#define SERVO_ROBOT_ADDR "39423"
+#define TANK_ROBOT_ADDR  "39421"
+#define RC_RACE_CAR_ADDR "39422"
+            
+const byte address[6] = RC_RACE_CAR_ADDR;     //Byte of array representing the address. This is the address where we will send the data. This should be same on the receiving side.
 int center_y = 0;
 int center_x = 0;
 byte buttonRegister1 = 0x00;
 byte buttonRegister2 = 0x00;
 byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
+int pulse_counter = 0;
+boolean powerIsPulse = false;
 
 #define JOYSTICK_X   A0
 #define JOYSTICK_Y   A1
@@ -34,6 +40,7 @@ byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
 #define BTN_CTR_LF    A3
 #define BTN_TOP_LF    2
 #define BTN_TOP_RT    3
+#define POWER_PULSE   A5
 
 // Map of all the button locations.
 static int button_map[] = {JOYSTICK_BTN, BTN_DOWN, BTN_RIGHT, BTN_UP,
@@ -55,6 +62,8 @@ void setup()
     pinMode(BTN_CTR_LF, INPUT_PULLUP);
     pinMode(BTN_TOP_LF, INPUT_PULLUP);
     pinMode(BTN_TOP_RT, INPUT_PULLUP);
+    pinMode(POWER_PULSE, OUTPUT);
+    digitalWrite(POWER_PULSE, HIGH);
     center_y = analogRead(JOYSTICK_Y);
     center_x = analogRead(JOYSTICK_X);
     radio.begin();                  //Starting the Wireless communication
@@ -112,6 +121,20 @@ void loop()
     {
       joystickYAdjusted = 255.0;
     }
+    // Hanlde pulsing the power supply
+    if (powerIsPulse && pulse_counter > 3)
+    {
+       powerIsPulse = false;
+       pulse_counter = 0;
+       digitalWrite(POWER_PULSE, HIGH);
+    }
+    else if (!powerIsPulse && pulse_counter > 40)
+    {
+       powerIsPulse = true;
+       pulse_counter = 0;
+       digitalWrite(POWER_PULSE, LOW);
+    }
+    pulse_counter++;
     
     // Now we packetize it
     data[2] = xDir;
