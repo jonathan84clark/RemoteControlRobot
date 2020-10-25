@@ -43,6 +43,8 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define RIGHT_A 6
 #define RIGHT_B 7
 #define PULSE_PIN 8
+#define WHITE_HEADLIGHTS 4
+#define THROTTLE_SCALE 1.0
 #else
 #define LEFT_A 5
 #define LEFT_B 6
@@ -51,9 +53,10 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define RIGHT_B 9
 
 #define PULSE_PIN 7
+#define WHITE_HEADLIGHTS A0
+#define AUX_HEADLIGHTS A1
+#define THROTTLE_SCALE 0.80
 #endif
-
-#define WHITE_HEADLIGHTS 4
 
 #define NUM_SENSORS 3
 #define SENSOR_TRIGGER_L A4
@@ -70,12 +73,15 @@ int enable[] = {SENSOR_ENABLE_L, SENSOR_ENABLE_M, SENSOR_ENABLE_R};
 float sensorReadings[] = {0.0, 0.0, 0.0};
 int sensorIndex = 0;
 // Setup the drive system
-Drive drive(LEFT_A, LEFT_B, 1.0, 0.0, RIGHT_A, RIGHT_B, 1.0, 0.0, MODE_DIFF_STEER);
+Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCALE, 0.0, MODE_DIFF_STEER);
 
 void setup() 
 {
    Serial.begin(9600);
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
+#if ROBOT_FASTROV
+   pinMode(AUX_HEADLIGHTS, OUTPUT);
+#endif
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
 
@@ -114,11 +120,17 @@ void loop()
           if (lights_on)
           {
               digitalWrite(WHITE_HEADLIGHTS, LOW);
+#if ROBOT_FASTROV
+              digitalWrite(AUX_HEADLIGHTS, LOW);
+#endif
               lights_on = false;
           }
           else
           {
               digitalWrite(WHITE_HEADLIGHTS, HIGH);
+#if ROBOT_FASTROV
+              digitalWrite(AUX_HEADLIGHTS, HIGH);
+#endif
               lights_on = true;
           }
           debounceTime = msTicks + 500;
