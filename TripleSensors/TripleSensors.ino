@@ -1,19 +1,17 @@
 /***************************************************************
-* TRANSMITTER
-* DESC: The transmitter code takes data from a joystick and buttons
-* and sends a heartbeat message to the reciever.
+* TRIPLE SENSORS
+* DESC: The triple sensors is the basis for all new robot designs
+* going forward.
 * Author: Jonathan L Clark
 * Date: 12/22/2019
 **************************************************************/
 #include <SPI.h>
-#include <nRF24L01.h>
 #include <RF24.h>
+#include <nRF24L01.h>
 #include "Drive.h"
-#if ROBOT_TRIPLE
-RF24 radio(10, 9); // CE, CSN
-#else
-RF24 radio(8, 10); // CE, CSN
-#endif
+#include "Config.h"
+
+// System Variables
 long msTicks = 0;
 long timeoutTime = 0;
 long debounceTime = 0;
@@ -22,71 +20,65 @@ unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
 unsigned long startMicros = 0;
 long nextDebugTime = 0;
+
+// Power Pulse Variables
 boolean phase = false;
 boolean pulseDone = false;
 float pulseTime = 0.0;
 boolean powerIsPulse = false;
-bool isTimeout = false;
-
-const byte address[6] = "39421";
 boolean lights_on = false;
 boolean last_state = false;
+
+// Radio variables
+const byte address[6] = "39421";
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-#define ROBOT_TRIPLE 0
-#define ROBOT_FASTROV 1
-
-#if ROBOT_TRIPLE
-#define LEFT_A 5
-#define LEFT_B 3
-
-#define RIGHT_A 6
-#define RIGHT_B 7
-#define PULSE_PIN 8
-#define WHITE_HEADLIGHTS 4
-#define THROTTLE_SCALE 1.0
-#else
-#define LEFT_A 5
-#define LEFT_B 6
-
-#define RIGHT_A 3
-#define RIGHT_B 9
-
-#define PULSE_PIN 7
-#define WHITE_HEADLIGHTS A0
-#define AUX_HEADLIGHTS A1
-#define THROTTLE_SCALE 0.80
-#endif
-
-#define NUM_SENSORS 3
-#define SENSOR_TRIGGER_L A4
-#define SENSOR_TRIGGER_M A3
-#define SENSOR_TRIGGER_R A2
-
-#define SENSOR_ENABLE_L A7
-#define SENSOR_ENABLE_M A6
-#define SENSOR_ENABLE_R A5
-#define SENSOR_ECHO 2
-
+#ifdef NUM_SENSORS
 int trigger[] = {SENSOR_TRIGGER_L, SENSOR_TRIGGER_M, SENSOR_TRIGGER_R};
 int enable[] = {SENSOR_ENABLE_L, SENSOR_ENABLE_M, SENSOR_ENABLE_R};
 float sensorReadings[] = {0.0, 0.0, 0.0};
 int sensorIndex = 0;
+#endif
+
+RF24 radio(RADIO_CE, RADIO_CSN); // CE, CSN
 // Setup the drive system
 Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCALE, 0.0, MODE_DIFF_STEER);
+
+/***********************************************************
+* SET HEADLIGHTS
+***********************************************************/
+void SetHeadlights(bool state)
+{
+   digitalWrite(WHITE_HEADLIGHTS, state);
+#ifdef AUX_HEADLIGHTS
+   digitalWrite(AUX_HEADLIGHTS, state);
+#endif
+}
+
+/***********************************************************
+* SET HEADLIGHTS
+***********************************************************/
+void SystemsOff()
+{
+   drive.ManualControl(0.0, 0.0);
+   SetHeadlights(false);
+}
 
 void setup() 
 {
    Serial.begin(9600);
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
-#if ROBOT_FASTROV
+#ifdef AUX_HEADLIGHTS
    pinMode(AUX_HEADLIGHTS, OUTPUT);
+#endif
+#ifdef BUZZER
+   pinMode(BUZZER, OUTPUT);
 #endif
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
 
 
-#if ROBOT_TRIPLE
+#ifdef NUM_SENSORS
    for (int i = 0; i < NUM_SENSORS; i++)
    {
       pinMode(trigger[i], OUTPUT);
@@ -114,27 +106,30 @@ void loop()
       yaw = (data[2] == 1) ? yaw * -1.0 : yaw;
       throttle = (data[4] == 1) ? throttle * -1.0 : throttle;
       drive.ManualControl(throttle, yaw);
-      isTimeout = false;
       if ((data[6] & 0x10) == 0x10 && debounceTime < msTicks)
       {
           if (lights_on)
           {
-              digitalWrite(WHITE_HEADLIGHTS, LOW);
-#if ROBOT_FASTROV
-              digitalWrite(AUX_HEADLIGHTS, LOW);
-#endif
+              SetHeadlights(false);
               lights_on = false;
           }
           else
           {
-              digitalWrite(WHITE_HEADLIGHTS, HIGH);
-#if ROBOT_FASTROV
-              digitalWrite(AUX_HEADLIGHTS, HIGH);
-#endif
+              SetHeadlights(true);
               lights_on = true;
           }
           debounceTime = msTicks + 500;
       }
+#ifdef BUZZER
+      if ((data[6] & 0x01) == 0x01)
+      {
+          digitalWrite(BUZZER, HIGH);
+      }
+      else
+      {
+          digitalWrite(BUZZER, LOW);
+      }
+#endif
       timeoutTime = msTicks + 500;
       delay(5);
    }
@@ -148,17 +143,9 @@ void loop()
    }
    if (timeoutTime < msTicks)
    {
-      digitalWrite(RIGHT_A, LOW);
-      digitalWrite(RIGHT_B, LOW);
-      digitalWrite(LEFT_A, LOW);
-      digitalWrite(LEFT_B, LOW);
-      digitalWrite(WHITE_HEADLIGHTS, LOW);
-      powerIsPulse = false;
-      digitalWrite(PULSE_PIN, HIGH);
-      pulseTime = msTicks + 5000;
-      isTimeout = true;
+       SystemsOff();
    }
-   if (pulseTime < msTicks && !isTimeout)
+   if (pulseTime < msTicks)
    {
        if (powerIsPulse)
        {
@@ -199,6 +186,7 @@ void DebugPrint()
 ****************************************/
 void ReadSensors()
 {
+#ifdef NUM_SENSORS
    float distInch = (float)delta / 148.0;
    if (pulseDone) // We finished a read, cache the distance
    {
@@ -220,6 +208,7 @@ void ReadSensors()
    delayMicroseconds(10);
    digitalWrite(trigger[sensorIndex], LOW);
    nextReadTime = msTicks + 50;
+#endif
 }
 
 void echoIsr() 
