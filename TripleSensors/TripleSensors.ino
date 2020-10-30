@@ -30,7 +30,11 @@ boolean lights_on = false;
 boolean last_state = false;
 
 // Radio variables
+#if ROBOT_CONFIG == SAND_RUNNDER
+const byte address[6] = "39422";
+#else
 const byte address[6] = "39421";
+#endif
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #ifdef NUM_SENSORS
@@ -42,7 +46,11 @@ int sensorIndex = 0;
 
 RF24 radio(RADIO_CE, RADIO_CSN); // CE, CSN
 // Setup the drive system
+#ifdef STEER_A
+Drive drive(STEER_A, STEER_B, THROTTLE_SCALE, 0.0, MAIN_A, MAIN_B, THROTTLE_SCALE, 0.0, MODE_PIVOT_STEER);
+#else
 Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCALE, 0.0, MODE_DIFF_STEER);
+#endif
 
 /***********************************************************
 * SET HEADLIGHTS
@@ -105,8 +113,25 @@ void loop()
       float yaw = ((float)data[3] / 255.0);
       yaw = (data[2] == 1) ? yaw * -1.0 : yaw;
       throttle = (data[4] == 1) ? throttle * -1.0 : throttle;
+      // Handles turn buttons
+      if (data[6] & 0x20)
+      {
+         yaw = -1.0;
+      }
+      else if (data[6] & 0x04)
+      {
+         yaw = 1.0;
+      }
+      if (data[6] & 0x08)
+      {
+         throttle = 1.0;
+      }
+      else if (data[6] & 0x02)
+      {
+         throttle = -1.0;
+      }
       drive.ManualControl(throttle, yaw);
-      if ((data[6] & 0x10) == 0x10 && debounceTime < msTicks)
+      if ((data[6] & 0x10) && debounceTime < msTicks)
       {
           if (lights_on)
           {
@@ -121,7 +146,7 @@ void loop()
           debounceTime = msTicks + 500;
       }
 #ifdef BUZZER
-      if ((data[6] & 0x01) == 0x01)
+      if (data[6] & 0x01)
       {
           digitalWrite(BUZZER, HIGH);
       }

@@ -37,7 +37,8 @@ void Drive::ManualControl(float joystickY, float joystickX)
    }
    else if (steering == MODE_PIVOT_STEER)
    {
-       // TODO
+       motor1.TorqueCommand(joystickX);
+       motor2.TorqueCommand(joystickY);
    }
    else
    {
