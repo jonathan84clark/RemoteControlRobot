@@ -13,8 +13,9 @@
 #define ROBOT_TANK    1
 #define ROBOT_FASTROV 2
 #define SAND_RUNNDER  3
+#define MINI_BOT      4
 
-#define ROBOT_CONFIG ROBOT_FASTROV 
+#define ROBOT_CONFIG MINI_BOT 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
@@ -82,7 +83,24 @@
    // Radio Pinouts
    #define RADIO_CE 10
    #define RADIO_CSN 9
-   
+
+/***********************************/
+#elif ROBOT_CONFIG == MINI_BOT
+   // Motor Pinouts
+   #define LEFT_A 9
+   #define LEFT_B 6
+
+   #define RIGHT_A 3
+   #define RIGHT_B 5
+
+   // Accessory Pinouts
+   #define PULSE_PIN A3
+   #define WHITE_HEADLIGHTS A0
+   #define THROTTLE_SCALE 0.80
+
+   // Radio Pinouts
+   #define RADIO_CE 8
+   #define RADIO_CSN 10
 /***********************************/
 #else
    // Motor Pinouts
