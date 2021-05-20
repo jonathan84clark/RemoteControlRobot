@@ -32,6 +32,8 @@ boolean last_state = false;
 // Radio variables
 #if ROBOT_CONFIG == SAND_RUNNDER
 const byte address[6] = "39422";
+#elif ROBOT_CONFIG == MEDIUM_BOT
+const byte address[6] = "39427";
 #else
 const byte address[6] = "39421";
 #endif
