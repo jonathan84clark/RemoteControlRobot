@@ -15,8 +15,9 @@
 #define SAND_RUNNDER  3
 #define MINI_BOT      4
 #define MEDIUM_BOT    5
+#define BOT_V2        6
 
-#define ROBOT_CONFIG MEDIUM_BOT 
+#define ROBOT_CONFIG BOT_V2 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
@@ -119,6 +120,24 @@
    // Radio Pinouts
    #define RADIO_CE 8
    #define RADIO_CSN 10
+/***********************************/
+#elif ROBOT_CONFIG == BOT_V2
+   // Motor Pinouts
+   #define LEFT_A 3
+   #define LEFT_B 5
+
+   #define RIGHT_A 6
+   #define RIGHT_B 9
+
+   // Accessory Pinouts
+   #define PULSE_PIN 7
+   #define THROTTLE_SCALE 1.0
+
+   // Radio Pinouts
+   #define RADIO_CE 8
+   #define RADIO_CSN 10
+
+   #define DEBUG_LED A0
 /***********************************/
 #else
    // Motor Pinouts

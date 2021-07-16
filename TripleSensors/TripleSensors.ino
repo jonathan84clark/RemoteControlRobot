@@ -19,7 +19,7 @@ unsigned long nextReadTime = 0;
 unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
 unsigned long startMicros = 0;
-long nextDebugTime = 0;
+unsigned long nextLightPulse = 0;
 
 // Power Pulse Variables
 boolean phase = false;
@@ -28,6 +28,8 @@ float pulseTime = 0.0;
 boolean powerIsPulse = false;
 boolean lights_on = false;
 boolean last_state = false;
+boolean gettingData = false;
+boolean dbgLedOn = false;
 
 // Radio variables
 #if ROBOT_CONFIG == SAND_RUNNDER
@@ -59,7 +61,9 @@ Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCAL
 ***********************************************************/
 void SetHeadlights(bool state)
 {
+#ifdef WHITE_HEADLIGHTS
    digitalWrite(WHITE_HEADLIGHTS, state);
+#endif
 #ifdef AUX_HEADLIGHTS
    digitalWrite(AUX_HEADLIGHTS, state);
 #endif
@@ -77,7 +81,9 @@ void SystemsOff()
 void setup() 
 {
    Serial.begin(9600);
+#ifdef WHITE_HEADLIGHTS
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
+#endif
 #ifdef AUX_HEADLIGHTS
    pinMode(AUX_HEADLIGHTS, OUTPUT);
 #endif
@@ -86,6 +92,11 @@ void setup()
 #endif
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
+
+#ifdef DEBUG_LED
+   pinMode(DEBUG_LED, OUTPUT);
+   digitalWrite(DEBUG_LED, LOW);
+#endif
 
 
 #ifdef NUM_SENSORS
@@ -157,12 +168,17 @@ void loop()
           digitalWrite(BUZZER, LOW);
       }
 #endif
+      gettingData = true;
       timeoutTime = msTicks + 500;
       delay(5);
    }
-   if (nextDebugTime < msTicks)
+   if (nextLightPulse < msTicks && gettingData)
    {
-      DebugPrint();
+#ifdef DEBUG_LED
+       dbgLedOn = !dbgLedOn;
+       digitalWrite(DEBUG_LED, dbgLedOn);
+       nextLightPulse = msTicks + 100;
+#endif
    }
    if (nextReadTime < msTicks || pulseDone)
    {
@@ -170,6 +186,11 @@ void loop()
    }
    if (timeoutTime < msTicks)
    {
+#ifdef DEBUG_LED
+       gettingData = false;
+       dbgLedOn = false;
+       digitalWrite(DEBUG_LED, dbgLedOn);
+#endif
        SystemsOff();
    }
    if (pulseTime < msTicks)
@@ -187,24 +208,6 @@ void loop()
           pulseTime = msTicks + 200;
        }
    }
-}
-
-/****************************************
-* DEBUG PRINT
-* DESC: Prints debug statements about the state
-* of the system.
-****************************************/
-void DebugPrint()
-{
-  /*
-   Serial.print("Dist1: ");
-   Serial.print(sensorReadings[0]);
-   Serial.print("Dist2: ");
-   Serial.print(sensorReadings[1]);
-   Serial.print("Dist3: ");
-   Serial.println(sensorReadings[2]);
-   nextDebugTime = msTicks + 500;
-   */
 }
 
 /****************************************
