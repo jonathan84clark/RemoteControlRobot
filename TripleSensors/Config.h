@@ -123,11 +123,11 @@
 /***********************************/
 #elif ROBOT_CONFIG == BOT_V2
    // Motor Pinouts
-   #define LEFT_A 3
-   #define LEFT_B 5
+   #define STEER_A 3
+   #define STEER_B 5
 
-   #define RIGHT_A 6
-   #define RIGHT_B 9
+   #define MAIN_A 9
+   #define MAIN_B 6
 
    // Accessory Pinouts
    #define PULSE_PIN 7

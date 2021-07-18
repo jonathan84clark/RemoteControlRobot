@@ -126,50 +126,57 @@ void loop()
       float yaw = ((float)data[3] / 255.0);
       yaw = (data[2] == 1) ? yaw * -1.0 : yaw;
       throttle = (data[4] == 1) ? throttle * -1.0 : throttle;
-      // Handles turn buttons
-      if (data[6] & 0x20)
+      if (data[0] != 0xC1 || data[1] != 0xE2)
       {
-         yaw = -1.0;
-      }
-      else if (data[6] & 0x04)
-      {
-         yaw = 1.0;
-      }
-      if (data[6] & 0x08)
-      {
-         throttle = 1.0;
-      }
-      else if (data[6] & 0x02)
-      {
-         throttle = -1.0;
-      }
-      drive.ManualControl(throttle, yaw);
-      if ((data[6] & 0x10) && debounceTime < msTicks)
-      {
-          if (lights_on)
-          {
-              SetHeadlights(false);
-              lights_on = false;
-          }
-          else
-          {
-              SetHeadlights(true);
-              lights_on = true;
-          }
-          debounceTime = msTicks + 500;
-      }
-#ifdef BUZZER
-      if (data[6] & 0x01)
-      {
-          digitalWrite(BUZZER, HIGH);
+         //Serial.println("Error packet");
       }
       else
       {
-          digitalWrite(BUZZER, LOW);
-      }
+         // Handles turn buttons
+         if (data[6] & 0x20)
+         {
+            yaw = -1.0;
+         }
+         else if (data[6] & 0x04)
+         {
+            yaw = 1.0;
+         }
+         if (data[6] & 0x08)
+         {
+            throttle = 1.0;
+         }
+         else if (data[6] & 0x02)
+         {
+            throttle = -1.0;
+         }
+         drive.ManualControl(throttle, yaw);
+         if ((data[6] & 0x10) && debounceTime < msTicks)
+         {
+             if (lights_on)
+             {
+                SetHeadlights(false);
+                lights_on = false;
+             }
+             else
+             {
+                SetHeadlights(true);
+                lights_on = true;
+             }
+             debounceTime = msTicks + 500;
+         }
+#ifdef BUZZER
+         if (data[6] & 0x01)
+         {
+            digitalWrite(BUZZER, HIGH);
+         }
+         else
+         {
+            digitalWrite(BUZZER, LOW);
+         }
 #endif
-      gettingData = true;
-      timeoutTime = msTicks + 500;
+         gettingData = true;
+         timeoutTime = msTicks + 500;
+      }
       delay(5);
    }
    if (nextLightPulse < msTicks && gettingData)
