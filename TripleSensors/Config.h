@@ -138,6 +138,10 @@
    #define RADIO_CSN 10
 
    #define DEBUG_LED A0
+   #define IR_LEFT A1
+   #define IR_MID A2
+   #define IR_RIGHT A3
+   
 /***********************************/
 #else
    // Motor Pinouts

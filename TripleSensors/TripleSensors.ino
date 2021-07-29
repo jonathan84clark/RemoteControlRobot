@@ -10,6 +10,7 @@
 #include <nRF24L01.h>
 #include "Drive.h"
 #include "Config.h"
+#include "AutoControl.h"
 
 // System Variables
 long msTicks = 0;
@@ -20,6 +21,7 @@ unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
 unsigned long startMicros = 0;
 unsigned long nextLightPulse = 0;
+unsigned long nextAutoControl = 0;
 
 // Power Pulse Variables
 boolean phase = false;
@@ -56,6 +58,8 @@ Drive drive(STEER_A, STEER_B, THROTTLE_SCALE, 0.0, MAIN_A, MAIN_B, THROTTLE_SCAL
 Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCALE, 0.0, MODE_DIFF_STEER);
 #endif
 
+AutoControl autoControl;
+
 /***********************************************************
 * SET HEADLIGHTS
 ***********************************************************/
@@ -74,13 +78,23 @@ void SetHeadlights(bool state)
 ***********************************************************/
 void SystemsOff()
 {
-   drive.ManualControl(0.0, 0.0);
+   //drive.ManualControl(0.0, 0.0);
    SetHeadlights(false);
 }
 
 void setup() 
 {
    Serial.begin(9600);
+#ifdef IR_LEFT
+   pinMode(IR_LEFT, INPUT);
+#endif
+#ifdef IR_MID
+   pinMode(IR_MID, INPUT);
+#endif
+#ifdef IR_RIGHT
+   pinMode(IR_RIGHT, INPUT);
+#endif
+   pinMode(A3, INPUT);
 #ifdef WHITE_HEADLIGHTS
    pinMode(WHITE_HEADLIGHTS, OUTPUT);
 #endif
@@ -114,6 +128,9 @@ void setup()
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
    radio.startListening();              //This sets the module as receiver
+
+   autoControl.SetEnabled(1);
+   autoControl.Setup(&drive);
 }
 
 void loop()
@@ -149,7 +166,10 @@ void loop()
          {
             throttle = -1.0;
          }
-         drive.ManualControl(throttle, yaw);
+         if (!autoControl.GetEnabled())
+         {
+            drive.ManualControl(throttle, yaw);
+         }
          if ((data[6] & 0x10) && debounceTime < msTicks)
          {
              if (lights_on)
@@ -187,9 +207,15 @@ void loop()
        nextLightPulse = msTicks + 100;
 #endif
    }
-   if (nextReadTime < msTicks || pulseDone)
+   if (nextReadTime < msTicks)
    {
-      //ReadSensors();
+      autoControl.UpdateSensors();
+      nextReadTime = msTicks + 20;
+   }
+   if (nextAutoControl < msTicks)
+   {
+      autoControl.UpdateSystem();
+      nextAutoControl = msTicks + 100;
    }
    if (timeoutTime < msTicks)
    {
