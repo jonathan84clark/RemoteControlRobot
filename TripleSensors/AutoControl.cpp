@@ -81,7 +81,7 @@ void AutoControl::UpdateSensors()
    {
       sampleIndex = 0;
    }
-   //Serial.println(midReading);
+   //Serial.println(rightReading);
 }
 
 /****************************************
@@ -106,7 +106,7 @@ void AutoControl::UpdateSystem()
     }
     drive->ManualControl(output, 0.0);
 
-    Serial.println(output);
+    //Serial.println(output);
     
     
 }

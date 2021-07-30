@@ -38,6 +38,8 @@ boolean dbgLedOn = false;
 const byte address[6] = "39422";
 #elif ROBOT_CONFIG == MEDIUM_BOT
 const byte address[6] = "39427";
+#elif ROBOT_CONFIG == BOT_V2
+const byte address[6] = "39428";
 #else
 const byte address[6] = "39421";
 #endif
@@ -129,7 +131,7 @@ void setup()
    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
    radio.startListening();              //This sets the module as receiver
 
-   autoControl.SetEnabled(1);
+   //autoControl.SetEnabled(1);
    autoControl.Setup(&drive);
 }
 
