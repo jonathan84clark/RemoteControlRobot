@@ -14,6 +14,8 @@
 #define SYSTEM_VOLTAGE 5.0
 #define MAX_ADC_VALUE 1023.0
 
+#define AUTO_THROTTLE 0.20
+
 /****************************************
 * AUTO CONTROL DEFAULT CONSTRUCTOR
 ****************************************/
@@ -21,8 +23,11 @@ AutoControl::AutoControl()
 {
    sampleIndex = 0;
    enabled = 0;
+   throttle = AUTO_THROTTLE;
+   yaw = 0.0;
    drivePid.Setup(0.001, 0.0, 0.0);
    drivePid.SetSetPoint(400.0);
+   steeringPid.Setup(0.005, 0.0, 0.0);
 }
 
 /****************************************
@@ -81,7 +86,68 @@ void AutoControl::UpdateSensors()
    {
       sampleIndex = 0;
    }
-   //Serial.println(rightReading);
+   //Serial.println(leftReading);
+}
+
+/****************************************
+* MANAGE AVOIDANCE STEERING
+* DESC: Handles the see-and-avoid steering part of the algorithm
+****************************************/
+float AutoControl::ManageAvoidanceSteering()
+{
+    float yaw = 0.0;
+    bool leftYawActive = false;
+    bool rightYawActive = false;
+    unsigned long currentTime = millis();
+    
+    // Determine if the left reading is active
+    if (leftReading > 150)
+    {
+       leftYawActive = true;
+    }
+    else if (leftReading < 100)
+    {
+       leftYawActive = false;
+    }
+
+    // Determine if the right is active
+    if (rightReading > 150)
+    {
+       rightYawActive = true;
+    }
+    else if (rightReading < 100)
+    {
+       rightYawActive = false;
+    }
+
+    // Handle the auto controls
+    if (rightYawActive && leftYawActive)
+    {
+        steeringPid.SetSetPoint(0);
+        float delta = leftReading - rightReading;
+        yaw = steeringPid.Update(delta, currentTime);
+        yaw *= -1.0;
+        drive->ManualControl(0.0, yaw);
+        
+    }
+    else if (rightYawActive)
+    {
+        steeringPid.SetSetPoint(200);
+        yaw = steeringPid.Update(rightReading, currentTime);
+    }
+    else if (leftYawActive)
+    {
+        steeringPid.SetSetPoint(200);
+        yaw = steeringPid.Update(leftReading, currentTime);
+        yaw = yaw * -1.0;
+    }
+    else
+    {
+        yaw = 0.0;
+        steeringPid.Clear();
+    }
+    return yaw;
+  
 }
 
 /****************************************
@@ -95,16 +161,41 @@ void AutoControl::UpdateSystem()
        return; // Do, nothing we aren't functional right now
     }
     unsigned long currentTime = millis();
-    float output = drivePid.Update((float)midReading, currentTime);
-    if (output > 0.8)
+    
+    //Serial.println(midReading);
+    // First we backup with the wheels rotated
+    if (midReading > 150 && uturnStage == 0 && nextUturnTime < currentTime)
     {
-       output = 0.8;
+        Serial.println("Start uturn");
+        uturnStage = 1;
+        throttle = -0.4;
+        if (leftReading < rightReading)
+        {
+           yaw = 1.0;
+        }
+        else
+        {
+           yaw = -1.0;
+        }
+        nextUturnTime = currentTime + 1500; // Start with 4 seconds
     }
-    if (output < -0.8)
+    else if (uturnStage == 1 && nextUturnTime < currentTime)
     {
-      output = -0.8;
+        throttle = AUTO_THROTTLE;
+        yaw = 0.0;
+        uturnStage = 0;
+        nextUturnTime = currentTime + 1000;
+        //Serial.println("Uturn finished");
     }
-    drive->ManualControl(output, 0.0);
+
+    if (uturnStage == 0)
+    {
+        yaw = ManageAvoidanceSteering();
+    }
+    drive->ManualControl(throttle, yaw);
+    
+    //float yaw = ManageAvoidanceSteering();
+    //drive->ManualControl(output, yaw);
 
     //Serial.println(output);
     

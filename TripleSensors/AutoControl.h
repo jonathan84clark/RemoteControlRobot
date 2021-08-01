@@ -25,13 +25,18 @@ class AutoControl
       
    private:
       float ComputeAverage(unsigned int* data, unsigned int arraySize);
+      float ManageAvoidanceSteering();
       unsigned int leftSamples[SENSOR_SAMPLES];
       unsigned int rightSamples[SENSOR_SAMPLES];
       unsigned int midSamples[SENSOR_SAMPLES];
+      unsigned long nextUturnTime;
       int sampleIndex = 0;
       float leftReading = 0;
       float rightReading = 0;
       float midReading = 0;
+      float throttle = 0.0;
+      float yaw = 0.0;
+      int uturnStage = 0;
       int enabled;
       PID drivePid;
       PID steeringPid;

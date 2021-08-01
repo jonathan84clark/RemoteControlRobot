@@ -80,7 +80,7 @@ void SetHeadlights(bool state)
 ***********************************************************/
 void SystemsOff()
 {
-   //drive.ManualControl(0.0, 0.0);
+   drive.ManualControl(0.0, 0.0);
    SetHeadlights(false);
 }
 
