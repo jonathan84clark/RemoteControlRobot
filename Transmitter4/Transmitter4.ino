@@ -15,11 +15,7 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 RF24 radio(9, 10); // CE, CSN
-#define SERVO_ROBOT_ADDR "39423"
-#define TANK_ROBOT_ADDR  "39421"
-#define RC_RACE_CAR_ADDR "39422"
             
-//const byte address[6] = "39422";     //Byte of array representing the address. This is the address where we will send the data. This should be same on the receiving side.
 int center_y = 0;
 int center_x = 0;
 byte buttonRegister1 = 0x00;
@@ -67,10 +63,20 @@ void setup()
     pinMode(BTN_MID, INPUT_PULLUP);
     pinMode(BTN_LEFT, INPUT_PULLUP);
 
+
     unsigned int cfgValue = 0;
 
-    cfgValue = (unsigned int)(analogRead(CFG_BIT0) > 1000) | (unsigned int)(analogRead(CFG_BIT1) > 1000) << 1;
-    cfgValue |= (unsigned int)digitalRead(CFG_BIT2) << 2 | (unsigned int)digitalRead(CFG_BIT3) << 3 | (unsigned int)digitalRead(CFG_BIT4) << 4;
+    // Handle negative high values
+    cfgValue = (unsigned int)(analogRead(CFG_BIT0) < 100) | (unsigned int)(analogRead(CFG_BIT1) < 100) << 1;
+    unsigned int bitVal2 = ~digitalRead(CFG_BIT2) & 0x0001;
+    unsigned int bitVal3 = ~digitalRead(CFG_BIT3) & 0x0001;
+    unsigned int bitVal4 = ~digitalRead(CFG_BIT4) & 0x0001;
+    cfgValue |= bitVal2 << 2 | bitVal3 << 3 | bitVal4 << 4;
+
+    // Handle positive high values
+    //cfgValue = (unsigned int)(analogRead(CFG_BIT0) > 1000) | (unsigned int)(analogRead(CFG_BIT1) > 1000) << 1;
+    //cfgValue |= (unsigned int)digitalRead(CFG_BIT2) << 2 | (unsigned int)digitalRead(CFG_BIT3) << 3 | (unsigned int)digitalRead(CFG_BIT4) << 4;
+    //cfgValue = (~cfgValue & 0x1F) + BASE_ADDR;
     cfgValue = (~cfgValue & 0x1F) + BASE_ADDR;
     byte buildAddr[6];
     delay(5000);
