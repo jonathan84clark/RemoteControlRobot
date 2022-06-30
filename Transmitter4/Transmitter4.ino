@@ -26,12 +26,12 @@ boolean powerIsPulse = false;
 
 #define JOYSTICK_X   A0
 #define JOYSTICK_Y   A1
-#define JOYSTICK_BTN A2
-#define BTN_DOWN      4
-#define BTN_RIGHT     5
-#define BTN_UP        6
-#define BTN_MID       7
-#define BTN_LEFT      8
+#define JOYSTICK_BTN  8
+#define BTN_DOWN      7
+#define BTN_RIGHT     3
+#define BTN_UP        4
+#define BTN_MID       5
+#define BTN_LEFT      6
 #define POWER_PULSE   2
 
 #define CFG_BIT0 A7
@@ -121,6 +121,7 @@ void loop()
     buttonRegister1 = 0x00;
     buttonRegister2 = 0x00;
     byte mask = 0x01;
+    //Serial.println(digitalRead(BTN_DOWN));
     // Check all of our buttons and pack the button data
     for (int i = 0; i < 6; i++)
     {
@@ -171,6 +172,7 @@ void loop()
     data[5] = (byte)joystickYAdjusted;
     data[6] = buttonRegister1;
     data[7] = buttonRegister2;
+    //Serial.println(buttonRegister1);
     radio.write(&data, sizeof(data));  //Sending the message to receiver 
     delay(100);
 }

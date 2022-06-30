@@ -24,6 +24,7 @@ unsigned long nextAutoControl = 0;
 unsigned long greenLedOffTime = 0;
 unsigned long yellowOffTime = 0;
 unsigned long buttonDebounce = 0;
+unsigned int lastButtonDown[10];
 
 // Power Pulse Variables
 boolean phase = false;
@@ -60,13 +61,20 @@ byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define RIGHT_BTN A6
 #define GO_BTN    A3
 
+#define ACTION_RIGHT   1
+#define ACTION_LEFT    2
+#define ACTION_FORWARD 4
+#define ACTION_BACK    8
+#define MAX_ACTIONS    256
+
 
 RF24 radio(RADIO_CE, RADIO_CSN); // CE, CSN
 // Setup the drive system
 Drive drive(LEFT_A, LEFT_B, THROTTLE_SCALE, 0.0, RIGHT_A, RIGHT_B, THROTTLE_SCALE, 0.0, MODE_DIFF_STEER);
 
 AutoControl autoControl;
-
+unsigned char actionList[256];
+unsigned int actionFillIndex = 0;
 
 /***********************************************************
 * SET HEADLIGHTS
@@ -143,7 +151,6 @@ void loop()
          }
          if ((data[6] & 0x10) && debounceTime < msTicks)
          {
-
              debounceTime = msTicks + 500;
          }
          gettingData = true;
@@ -151,7 +158,7 @@ void loop()
       }
       delay(5);
    }
-   if (digitalRead(GREEN_LED) == LOW && greenLedOffTime < msTicks)
+   if (digitalRead(GREEN_LED) != LOW && greenLedOffTime < msTicks)
    {
        digitalWrite(GREEN_LED, LOW);
    }
@@ -171,35 +178,72 @@ void loop()
    }
    if (buttonDebounce < msTicks)
    {
+      unsigned int buttonDown = 0;
       if (digitalRead(YELLOW_LED))
       {
          digitalWrite(YELLOW_LED, LOW);
       }
-      if (digitalRead(UP_BTN))
+      if (actionFillIndex == MAX_ACTIONS)
       {
-         //digitalWrite(YELLOW_LED, HIGH); // Stuck on
-         buttonDebounce = msTicks + 200;
+      
+        
       }
-      else if (digitalRead(DN_BTN))
+      if (!digitalRead(UP_BTN) && lastButtonDown[0] == 0)
       {
-         //digitalWrite(YELLOW_LED, HIGH); // Not working
-         buttonDebounce = msTicks + 200;
+         buttonDown = 1;
+         lastButtonDown[0] = 1;
+         //actionList[actionFillIndex] = ACTION_FORWARD;
+      }
+      else if (digitalRead(UP_BTN))
+      {
+          lastButtonDown[0] = 0;
+      }
+      if (!analogRead(DN_BTN) && lastButtonDown[1] == 0)
+      {
+         buttonDown = 1;
+         lastButtonDown[1] = 1;
+         //actionList[actionFillIndex] = ACTION_BACK;
+      }
+      else if (analogRead(DN_BTN))
+      {
+         lastButtonDown[1] = 0;
+      }
+      if (!digitalRead(LEFT_BTN) && lastButtonDown[2] == 0)
+      {
+         buttonDown = 1;
+         lastButtonDown[2] = 1;
+         //actionList[actionFillIndex] = ACTION_LEFT;
       }
       else if (digitalRead(LEFT_BTN))
       {
-         digitalWrite(YELLOW_LED, HIGH);
-         buttonDebounce = msTicks + 200;
+         lastButtonDown[2] = 0;
       }
-      else if (digitalRead(RIGHT_BTN))
+      if (!analogRead(RIGHT_BTN) && lastButtonDown[3] == 0)
       {
-         //digitalWrite(YELLOW_LED, HIGH);
-         buttonDebounce = msTicks + 200;
+         buttonDown = 1;
+         lastButtonDown[3] = 1;
+         //actionList[actionFillIndex] = ACTION_RIGHT;
+      }
+      else if (analogRead(RIGHT_BTN))
+      {
+         lastButtonDown[3] = 0;
+      }
+      if (!digitalRead(GO_BTN) && lastButtonDown[4] == 0)
+      {
+         buttonDown = 1;
+         lastButtonDown[4] = 1;
       }
       else if (digitalRead(GO_BTN))
       {
-         //digitalWrite(YELLOW_LED, HIGH);
-         buttonDebounce = msTicks + 200;
+         lastButtonDown[4] = 0;
       }
+      if (buttonDown)
+      {
+         digitalWrite(YELLOW_LED, HIGH);
+         buttonDebounce = msTicks + 200;
+         Serial.println("Call1");
+      }
+      actionFillIndex++;
 
    }
    if (pulseTime < msTicks)

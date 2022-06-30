@@ -17,7 +17,7 @@
 #define MEDIUM_BOT    5
 #define BOT_V2        6
 
-#define ROBOT_CONFIG BOT_V2 
+#define ROBOT_CONFIG ROBOT_FASTROV 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
@@ -145,8 +145,8 @@
 /***********************************/
 #else
    // Motor Pinouts
-   #define LEFT_A 5
-   #define LEFT_B 6
+   #define LEFT_A 6
+   #define LEFT_B 5
 
    #define RIGHT_A 3
    #define RIGHT_B 9
