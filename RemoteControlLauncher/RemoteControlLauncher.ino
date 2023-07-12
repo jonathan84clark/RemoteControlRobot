@@ -76,7 +76,7 @@ void loop()
             {
                launchSeq = true;
                digitalWrite(RELAY_PIN, HIGH);
-               launchStopTime = msTicks + 5000;
+               launchStopTime = msTicks + 2000;
             }
          }
          if ((data[6] & 0x10) && debounceTime < msTicks)
