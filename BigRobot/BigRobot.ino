@@ -2,6 +2,10 @@
 * BIG ROBOT
 * DESC: This code is designed to control the large robot chasis with
 * * macanum wheels
+* GPIO16 -> MISO (SD)
+* GPIO17 -> CSN (SD)
+* GPIO18 -> SCK (SD)
+* GPIO19 -> MOSI (SD)
 * Author: Jonathan L Clark
 * Date: 7/12/2023
 **************************************************************/
@@ -9,20 +13,9 @@
 #include <RF24.h>
 #include <nRF24L01.h>
 
-#define CE 8
-#define CSN 7
+#define CE 6
+#define CSN 17
 
-#define PWM_MOTOR1 3
-#define DIR_MOTOR1 2
-
-#define PWM_MOTOR2 5
-#define DIR_MOTOR2 4
-
-#define PWM_MOTOR3 6
-#define DIR_MOTOR3 A7
-
-#define PWM_MOTOR4 9
-#define DIR_MOTOR4 10
 
 // System Variables
 long msTicks = 0;
@@ -94,6 +87,7 @@ void loop()
          throttle = -1.0;
       }
       Serial.println("Got data!");
+      Serial.println(throttle);
       //drive.ManualControl(throttle, yaw);
       timeoutTime = msTicks + 500;
       delay(5);
