@@ -13,7 +13,7 @@
 #include <RF24.h>
 #include <nRF24L01.h>
 
-#define CE 6
+#define CE 20
 #define CSN 17
 
 
