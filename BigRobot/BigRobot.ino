@@ -12,10 +12,24 @@
 #include <SPI.h>
 #include <RF24.h>
 #include <nRF24L01.h>
+#include "Drive.h"
 
 #define CE 20
 #define CSN 17
 
+#define BLUE_LED 21
+
+#define BACK_RIGHT_A 1
+#define BACK_RIGHT_B 0
+
+#define BACK_LEFT_A 5
+#define BACK_LEFT_B 4
+
+#define FRONT_LEFT_A 6
+#define FRONT_LEFT_B 7
+
+#define FRONT_RIGHT_A 2
+#define FRONT_RIGHT_B 3
 
 // System Variables
 long msTicks = 0;
@@ -25,33 +39,26 @@ unsigned long nextReadTime = 0;
 unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
 unsigned long startMicros = 0;
-long nextDebugTime = 0;
-
-// Power Pulse Variables
-boolean phase = false;
-boolean pulseDone = false;
-float pulseTime = 0.0;
-boolean powerIsPulse = false;
-boolean lights_on = false;
-boolean last_state = false;
+unsigned long ledOffTime = 0;
 
 const byte address[6] = "39421";
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 RF24 radio(CE, CSN); // CE, CSN
-
+Drive drive(FRONT_LEFT_A, FRONT_LEFT_B, BACK_LEFT_A, BACK_LEFT_B, FRONT_RIGHT_A, FRONT_RIGHT_B, BACK_RIGHT_A, BACK_RIGHT_B);
 
 /***********************************************************
 * SET HEADLIGHTS
 ***********************************************************/
 void SystemsOff()
 {
-   
+   drive.ManualControl(0.0, 0.0);
 }
 
 void setup() 
 {
    Serial.begin(9600);
+   pinMode(BLUE_LED, OUTPUT);
    
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
@@ -61,6 +68,7 @@ void setup()
 
 void loop()
 {
+
    msTicks = millis();
    if (radio.available())              //Looking for the data.
    {
@@ -86,15 +94,15 @@ void loop()
       {
          throttle = -1.0;
       }
-      Serial.println("Got data!");
-      Serial.println(throttle);
-      //drive.ManualControl(throttle, yaw);
-      timeoutTime = msTicks + 500;
+      digitalWrite(BLUE_LED, HIGH);
+      ledOffTime = msTicks + 50;
+      drive.ManualControl(throttle, yaw);
+      timeoutTime = msTicks + 1000;
       delay(5);
    }
-   if (nextReadTime < msTicks || pulseDone)
+   if (digitalRead(BLUE_LED) == HIGH && ledOffTime < msTicks)
    {
-      //ReadSensors();
+       digitalWrite(BLUE_LED, LOW);
    }
    if (timeoutTime < msTicks)
    {
