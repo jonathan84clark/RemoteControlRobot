@@ -68,7 +68,6 @@ void setup()
 
 void loop()
 {
-
    msTicks = millis();
    if (radio.available())              //Looking for the data.
    {
@@ -94,16 +93,17 @@ void loop()
       {
          throttle = -1.0;
       }
-      digitalWrite(BLUE_LED, HIGH);
+      Serial.println(throttle);
+      //digitalWrite(BLUE_LED, HIGH);
       ledOffTime = msTicks + 50;
       drive.ManualControl(throttle, yaw);
-      timeoutTime = msTicks + 1000;
+      timeoutTime = msTicks + 5000;
       delay(5);
    }
-   if (digitalRead(BLUE_LED) == HIGH && ledOffTime < msTicks)
-   {
-       digitalWrite(BLUE_LED, LOW);
-   }
+   //if (digitalRead(BLUE_LED) == HIGH && ledOffTime < msTicks)
+   //{
+   //    //digitalWrite(BLUE_LED, LOW);
+  // }
    if (timeoutTime < msTicks)
    {
        SystemsOff();
