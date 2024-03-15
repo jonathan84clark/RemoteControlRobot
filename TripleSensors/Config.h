@@ -16,8 +16,9 @@
 #define MINI_BOT      4
 #define MEDIUM_BOT    5
 #define BOT_V2        6
+#define SUPER_POWERS_A4 7
 
-#define ROBOT_CONFIG ROBOT_FASTROV 
+#define ROBOT_CONFIG SUPER_POWERS_A4 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
@@ -141,6 +142,23 @@
    #define IR_LEFT A1
    #define IR_MID A2
    #define IR_RIGHT A3
+
+#elif ROBOT_CONFIG == SUPER_POWERS_A4
+   // Motor Pinouts
+   #define STEER_A 9
+   #define STEER_B 6
+
+   #define MAIN_A 5 
+   #define MAIN_B 3
+
+   // Accessory Pinouts
+   #define THROTTLE_SCALE 1.0
+
+   // Radio Pinouts
+   #define RADIO_CE 8
+   #define RADIO_CSN 7
+
+   #define DEBUG_LED A0
    
 /***********************************/
 #else

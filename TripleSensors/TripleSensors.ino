@@ -40,6 +40,8 @@ const byte address[6] = "39422";
 const byte address[6] = "39427";
 #elif ROBOT_CONFIG == BOT_V2
 const byte address[6] = "39428";
+#elif ROBOT_CONFIG == SUPER_POWERS_A4
+const byte address[6] = "39424";
 #else
 const byte address[6] = "39421";
 #endif
@@ -106,8 +108,8 @@ void setup()
 #ifdef BUZZER
    pinMode(BUZZER, OUTPUT);
 #endif
-   pinMode(PULSE_PIN, OUTPUT);
-   digitalWrite(PULSE_PIN, HIGH);
+   //pinMode(PULSE_PIN, OUTPUT);
+   //digitalWrite(PULSE_PIN, HIGH);
 
 #ifdef DEBUG_LED
    pinMode(DEBUG_LED, OUTPUT);
@@ -233,13 +235,13 @@ void loop()
        if (powerIsPulse)
        {
           powerIsPulse = false;
-          digitalWrite(PULSE_PIN, HIGH);
+          //digitalWrite(PULSE_PIN, HIGH);
           pulseTime = msTicks + 5000;
        }
        else
        {
           powerIsPulse = true;
-          digitalWrite(PULSE_PIN, LOW);
+          //digitalWrite(PULSE_PIN, LOW);
           pulseTime = msTicks + 200;
        }
    }
