@@ -158,7 +158,7 @@
    #define RADIO_CE 8
    #define RADIO_CSN 7
 
-   #define DEBUG_LED A0
+   #define DEBUG_LED 2
    
 /***********************************/
 #else
