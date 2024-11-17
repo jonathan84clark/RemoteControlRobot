@@ -20,9 +20,11 @@ int center_y = 0;
 int center_x = 0;
 byte buttonRegister1 = 0x00;
 byte buttonRegister2 = 0x00;
-byte data[8] = {0xC1, 0xE2, 0, 0, 0, 0, 0, 0};
+byte device_address = 45;
+byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int pulse_counter = 0;
 boolean powerIsPulse = false;
+const byte address[6] = "99885";
 
 #define JOYSTICK_X   A0
 #define JOYSTICK_Y   A1
@@ -40,7 +42,7 @@ boolean powerIsPulse = false;
 #define CFG_BIT3 A4
 #define CFG_BIT4 A3
 
-#define BASE_ADDR 39420
+#define SYSTEM_ID 0x4D // Indicates that this is the Jonathan remote control system
 
 // Map of all the button locations.
 static int button_map[] = {JOYSTICK_BTN, BTN_DOWN, BTN_RIGHT, BTN_UP,
@@ -64,38 +66,29 @@ void setup()
     pinMode(BTN_LEFT, INPUT_PULLUP);
 
 
-    unsigned int cfgValue = 0;
+    byte cfg_address = 0;
 
     // Handle negative high values
-    cfgValue = (unsigned int)(analogRead(CFG_BIT0) < 100) | (unsigned int)(analogRead(CFG_BIT1) < 100) << 1;
+    cfg_address = (unsigned int)(analogRead(CFG_BIT0) < 100) | (unsigned int)(analogRead(CFG_BIT1) < 100) << 1;
     unsigned int bitVal2 = ~digitalRead(CFG_BIT2) & 0x0001;
     unsigned int bitVal3 = ~digitalRead(CFG_BIT3) & 0x0001;
     unsigned int bitVal4 = ~digitalRead(CFG_BIT4) & 0x0001;
-    cfgValue |= bitVal2 << 2 | bitVal3 << 3 | bitVal4 << 4;
+    cfg_address |= bitVal2 << 2 | bitVal3 << 3 | bitVal4 << 4;
 
     // Handle positive high values
-    //cfgValue = (unsigned int)(analogRead(CFG_BIT0) > 1000) | (unsigned int)(analogRead(CFG_BIT1) > 1000) << 1;
-    //cfgValue |= (unsigned int)digitalRead(CFG_BIT2) << 2 | (unsigned int)digitalRead(CFG_BIT3) << 3 | (unsigned int)digitalRead(CFG_BIT4) << 4;
-    //cfgValue = (~cfgValue & 0x1F) + BASE_ADDR;
-    cfgValue = (~cfgValue & 0x1F) + BASE_ADDR;
-    byte buildAddr[6];
-    delay(5000);
-    memset(buildAddr, 0, 6);
-    Serial.print("CFG value: ");
-    Serial.println(cfgValue);
-    int buildAddrIdx = 4;
-    for (int i = 0; i < 6; i++)
-    {
-       char value = (cfgValue % 10) + 48;
-       cfgValue = cfgValue / 10;
-       buildAddr[buildAddrIdx--] = value;
-    }
+    cfg_address = (unsigned int)(analogRead(CFG_BIT0) > 1000) | (unsigned int)(analogRead(CFG_BIT1) > 1000) << 1;
+    cfg_address |= (unsigned int)digitalRead(CFG_BIT2) << 2 | (unsigned int)digitalRead(CFG_BIT3) << 3 | (unsigned int)digitalRead(CFG_BIT4) << 4;
+    cfg_address = (~cfg_address & 0x1F);
+
+    device_address += cfg_address;
+    Serial.print("Device address: ");
+    Serial.println(device_address);
     pinMode(POWER_PULSE, OUTPUT);
     digitalWrite(POWER_PULSE, HIGH);
     center_y = analogRead(JOYSTICK_Y);
     center_x = analogRead(JOYSTICK_X);
     radio.begin();                  //Starting the Wireless communication
-    radio.openWritingPipe(buildAddr); //Setting the address where we will send the data
+    radio.openWritingPipe(address); //Setting the address where we will send the data
     radio.setPALevel(RF24_PA_MAX);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
     radio.stopListening();          //This sets the module as transmitter
 }
@@ -121,7 +114,6 @@ void loop()
     buttonRegister1 = 0x00;
     buttonRegister2 = 0x00;
     byte mask = 0x01;
-    //Serial.println(digitalRead(BTN_DOWN));
     // Check all of our buttons and pack the button data
     for (int i = 0; i < 6; i++)
     {
@@ -166,13 +158,19 @@ void loop()
     pulse_counter++;
     
     // Now we packetize it
+    data[0] = SYSTEM_ID;
+    if ((buttonRegister1 & 0x01) == 0x01)
+    {
+        data[0] |= 0x80; // Indicates to the system we are okay syncing
+        //Serial.println("Sync button down");
+    }
+    data[1] = device_address; // Tell the other device what our remote control address is
     data[2] = xDir;
     data[3] = (byte)joystickXAdjusted;
     data[4] = yDir;
     data[5] = (byte)joystickYAdjusted;
     data[6] = buttonRegister1;
     data[7] = buttonRegister2;
-    //Serial.println(buttonRegister1);
     radio.write(&data, sizeof(data));  //Sending the message to receiver 
     delay(100);
 }
