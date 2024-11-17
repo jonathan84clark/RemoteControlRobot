@@ -6,16 +6,21 @@
 * Date: 12/22/2019
 **************************************************************/
 #include <SPI.h>
+#include <EEPROM.h>
 #include <RF24.h>
 #include <nRF24L01.h>
 #include "Drive.h"
 #include "Config.h"
 #include "AutoControl.h"
 
+#define SYSTEM_ID 0x4D // Indicates that this is the Jonathan remote control system
+
 // System Variables
 long msTicks = 0;
 long timeoutTime = 0;
 long debounceTime = 0;
+byte paired_remote_addr = 0x00;
+bool controller_paired = false;
 unsigned long nextReadTime = 0;
 unsigned long pulseDownTime = 0;
 unsigned long delta = 0;
@@ -35,15 +40,15 @@ boolean dbgLedOn = false;
 
 // Radio variables
 #if ROBOT_CONFIG == SAND_RUNNDER
-const byte address[6] = "39422";
+const byte address[6] = "99885";
 #elif ROBOT_CONFIG == MEDIUM_BOT
-const byte address[6] = "39427";
+const byte address[6] = "99885";
 #elif ROBOT_CONFIG == BOT_V2
-const byte address[6] = "39428";
+const byte address[6] = "99885";
 #elif ROBOT_CONFIG == SUPER_POWERS_A4
-const byte address[6] = "39424";
+const byte address[6] = "99885";
 #else
-const byte address[6] = "39421";
+const byte address[6] = "99885";
 #endif
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -127,7 +132,11 @@ void setup()
    }
    attachInterrupt(digitalPinToInterrupt(SENSOR_ECHO), echoIsr, CHANGE);
 #endif
-   
+   byte last_remote_addr = 0;
+   EEPROM.get(10, last_remote_addr);
+   Serial.print("Last eeprom address: ");
+   Serial.println(last_remote_addr);
+   paired_remote_addr = last_remote_addr;
    radio.begin();
    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
@@ -147,12 +156,29 @@ void loop()
       float yaw = ((float)data[3] / 255.0);
       yaw = (data[2] == 1) ? yaw * -1.0 : yaw;
       throttle = (data[4] == 1) ? throttle * -1.0 : throttle;
-      if (data[0] != 0xC1 || data[1] != 0xE2)
+      byte sync_set = 0;
+      byte remote_address = data[1];
+      byte read_system_id = (data[0] & ~0x80);
+      // Once we pair we won't allow another pair until a reboot
+      if ((data[0] & 0x80) == 0x80 && !controller_paired)
       {
-         //Serial.println("Error packet");
+         sync_set = 1;
+         paired_remote_addr = remote_address;
+         EEPROM.put(10, paired_remote_addr);
+         //controller_paired = true;
+         Serial.print("Paired to remote with addr: ");
+         Serial.println(paired_remote_addr);
+      }
+      if (read_system_id != SYSTEM_ID || paired_remote_addr != remote_address)
+      {
+
       }
       else
       {
+         if (!controller_paired)
+         {
+             controller_paired = true;
+         }
          // Handles turn buttons
          if (data[6] & 0x20)
          {
@@ -197,7 +223,8 @@ void loop()
          {
             digitalWrite(BUZZER, LOW);
          }
-#endif
+#endif 
+         Serial.println("Data"); 
          gettingData = true;
          timeoutTime = msTicks + 500;
       }
