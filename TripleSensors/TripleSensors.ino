@@ -113,8 +113,8 @@ void setup()
 #ifdef BUZZER
    pinMode(BUZZER, OUTPUT);
 #endif
-   //pinMode(PULSE_PIN, OUTPUT);
-   //digitalWrite(PULSE_PIN, HIGH);
+   pinMode(PULSE_PIN, OUTPUT);
+   digitalWrite(PULSE_PIN, HIGH);
 
 #ifdef DEBUG_LED
    pinMode(DEBUG_LED, OUTPUT);
@@ -263,13 +263,13 @@ void loop()
        if (powerIsPulse)
        {
           powerIsPulse = false;
-          //digitalWrite(PULSE_PIN, HIGH);
+          digitalWrite(PULSE_PIN, HIGH);
           pulseTime = msTicks + 5000;
        }
        else
        {
           powerIsPulse = true;
-          //digitalWrite(PULSE_PIN, LOW);
+          digitalWrite(PULSE_PIN, LOW);
           pulseTime = msTicks + 200;
        }
    }
