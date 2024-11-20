@@ -18,7 +18,7 @@ int center_y = 0;
 int center_x = 0;
 byte buttonRegister1 = 0x00;
 byte buttonRegister2 = 0x00;
-byte device_address = 90;
+byte device_address = 95;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int pulse_counter = 0;
 boolean powerIsPulse = false;
@@ -27,24 +27,19 @@ const byte address[6] = "99885";
 #define JOYSTICK_X   A0
 #define JOYSTICK_Y   A1
 #define JOYSTICK_BTN A2
-#define BTN_DOWN      4
-#define BTN_RIGHT     5
-#define BTN_UP        6
-#define BTN_MID       7
-#define BTN_LEFT      8
+#define BTN_DOWN      2
+#define BTN_RIGHT     3
+#define BTN_UP        4
+#define BTN_MID       5
+#define BTN_LEFT      6
 
-#define BTN_CTR_RT    A4
-#define BTN_CTR_LF    A3
-#define BTN_TOP_LF    2
-#define BTN_TOP_RT    3
-#define POWER_PULSE   A5
+#define POWER_PULSE   7
 
 #define SYSTEM_ID 0x4D // Indicates that this is the Jonathan remote control system
 
 // Map of all the button locations.
 static int button_map[] = {JOYSTICK_BTN, BTN_DOWN, BTN_RIGHT, BTN_UP,
-                           BTN_MID, BTN_LEFT, BTN_CTR_RT, BTN_CTR_LF,
-                           BTN_TOP_LF, BTN_TOP_RT};
+                           BTN_MID, BTN_LEFT};
 
 void setup() 
 {
@@ -57,10 +52,6 @@ void setup()
     pinMode(BTN_UP, INPUT_PULLUP);
     pinMode(BTN_MID, INPUT_PULLUP);
     pinMode(BTN_LEFT, INPUT_PULLUP);
-    pinMode(BTN_CTR_RT, INPUT_PULLUP);
-    pinMode(BTN_CTR_LF, INPUT_PULLUP);
-    pinMode(BTN_TOP_LF, INPUT_PULLUP);
-    pinMode(BTN_TOP_RT, INPUT_PULLUP);
     pinMode(POWER_PULSE, OUTPUT);
     digitalWrite(POWER_PULSE, HIGH);
     center_y = analogRead(JOYSTICK_Y);
@@ -95,13 +86,20 @@ void loop()
     // Check all of our buttons and pack the button data
     for (int i = 0; i < 10; i++)
     {
-        if (digitalRead(button_map[i]) == 0)
+        if (i > 0 && digitalRead(button_map[i]) == 0)
         {
             if (i > 7)
             {
                buttonRegister2 |= mask;
             }
             else
+            {
+               buttonRegister1 |= mask;
+            }
+        }
+        else if (i == 0)
+        {
+            if (digitalRead(button_map[i]) == 1)
             {
                buttonRegister1 |= mask;
             }
@@ -140,7 +138,7 @@ void loop()
     if ((buttonRegister1 & 0x01) == 0x01)
     {
         data[0] |= 0x80; // Indicates to the system we are okay syncing
-        //Serial.println("Sync button down");
+        Serial.println("Sync button down");
     }
     data[1] = device_address;
     data[2] = xDir;
