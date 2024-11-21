@@ -39,17 +39,7 @@ boolean gettingData = false;
 boolean dbgLedOn = false;
 
 // Radio variables
-#if ROBOT_CONFIG == SAND_RUNNDER
 const byte address[6] = "99885";
-#elif ROBOT_CONFIG == MEDIUM_BOT
-const byte address[6] = "99885";
-#elif ROBOT_CONFIG == BOT_V2
-const byte address[6] = "99885";
-#elif ROBOT_CONFIG == SUPER_POWERS_A4
-const byte address[6] = "99885";
-#else
-const byte address[6] = "99885";
-#endif
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 #ifdef NUM_SENSORS
@@ -113,8 +103,11 @@ void setup()
 #ifdef BUZZER
    pinMode(BUZZER, OUTPUT);
 #endif
+
+#ifdef PULSE_PIN
    pinMode(PULSE_PIN, OUTPUT);
    digitalWrite(PULSE_PIN, HIGH);
+#endif
 
 #ifdef DEBUG_LED
    pinMode(DEBUG_LED, OUTPUT);
@@ -258,6 +251,7 @@ void loop()
 #endif
        SystemsOff();
    }
+#ifdef PULSE_PIN
    if (pulseTime < msTicks)
    {
        if (powerIsPulse)
@@ -273,6 +267,7 @@ void loop()
           pulseTime = msTicks + 200;
        }
    }
+#endif
 }
 
 /****************************************

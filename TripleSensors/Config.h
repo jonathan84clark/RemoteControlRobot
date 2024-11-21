@@ -18,7 +18,7 @@
 #define BOT_V2        6
 #define SUPER_POWERS_A4 7
 
-#define ROBOT_CONFIG MINI_BOT 
+#define ROBOT_CONFIG SUPER_POWERS_A4 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
