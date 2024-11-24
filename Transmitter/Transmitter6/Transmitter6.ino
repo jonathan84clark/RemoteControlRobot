@@ -20,7 +20,7 @@ int center_y = 0;
 int center_x = 0;
 byte buttonRegister1 = 0x00;
 byte buttonRegister2 = 0x00;
-byte device_address = 120;
+byte device_address = 130;
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 const byte address[6] = "99885";
 
@@ -90,6 +90,7 @@ void setup()
 void loop()
 {
     // Calculate joystick data
+    analogWrite(LED_PIN, 10);
     int joystickYMag = center_y - analogRead(JOYSTICK_Y);
     int joystickXMag = center_x - analogRead(JOYSTICK_X);
     float joystickYAdjusted = (float)joystickYMag * 255.0 / (float)center_y;
@@ -110,17 +111,17 @@ void loop()
     buttonRegister2 = 0x00;
     byte mask = 0x01;
     // Check all of our buttons and pack the button data
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         if (digitalRead(button_map[i]) == 0)
         {
             if (i > 7)
             {
-               buttonRegister2 |= mask;
+                buttonRegister2 |= mask;
             }
             else
             {
-               buttonRegister1 |= mask;
+                buttonRegister1 |= mask;
             }
         }
         mask = mask << 1;
@@ -137,15 +138,16 @@ void loop()
     {
       joystickYAdjusted = 255.0;
     }
+    buttonRegister1 ^= 0x01;
     
     // Now we packetize it
     data[0] = SYSTEM_ID;
-    if ((buttonRegister1 & 0x10) == 0x10)
+    if (digitalRead(SYNC_BTN) == LOW)
     {
         data[0] |= 0x80; // Indicates to the system we are okay syncing
         Serial.println("Sync button down");
     }
-    buttonRegister1 &= ~0x02;
+    //buttonRegister1 &= ~0x02;
     data[1] = device_address; // Tell the other device what our remote control address is
     data[2] = xDir;
     data[3] = (byte)joystickXAdjusted;
@@ -155,5 +157,7 @@ void loop()
     data[7] = buttonRegister2;
     //Serial.println(buttonRegister1);
     radio.write(&data, sizeof(data));  //Sending the message to receiver 
-    delay(100);
+    delay(50);
+    analogWrite(LED_PIN, 0);
+    delay(50);
 }
