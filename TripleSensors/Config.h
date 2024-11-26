@@ -17,8 +17,9 @@
 #define MEDIUM_BOT    5
 #define BOT_V2        6
 #define SUPER_POWERS_A4 7
+#define BAT_MOBILE 8
 
-#define ROBOT_CONFIG SUPER_POWERS_A4 
+#define ROBOT_CONFIG BAT_MOBILE 
 
 /***********TRIPLE SENSOR CONFIG************/
 #if ROBOT_CONFIG == ROBOT_TRIPLE
@@ -159,7 +160,28 @@
    #define RADIO_CSN 7
 
    #define DEBUG_LED 2
-   
+
+#elif ROBOT_CONFIG == BAT_MOBILE
+   // Motor Pinouts
+   #define STEER_A 3
+   #define STEER_B 5
+
+   #define MAIN_A 9 
+   #define MAIN_B 6
+
+   // Accessory Pinouts
+   #define THROTTLE_SCALE 1.0
+
+   // Radio Pinouts
+   #define RADIO_CE 10
+   #define RADIO_CSN 8
+
+   #define DEBUG_LED A0
+   #define ERROR_LED A1
+
+   #define RESET_BUTTON 2
+   #define AUX_BUTTON 7 // Only on one of the devices
+
 /***********************************/
 #else
    // Motor Pinouts
