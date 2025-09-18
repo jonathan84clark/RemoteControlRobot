@@ -152,7 +152,7 @@ void loop()
       byte sync_set = 0;
       byte remote_address = data[1];
       byte read_system_id = (data[0] & ~0x80);
-      //Serial.println("Got data");
+      Serial.println("Got data");
       // Once we pair we won't allow another pair until a reboot
       if ((data[0] & 0x80) == 0x80 && !controller_paired)
       {

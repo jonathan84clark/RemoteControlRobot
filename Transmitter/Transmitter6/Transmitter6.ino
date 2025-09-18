@@ -82,7 +82,13 @@ void setup()
     Serial.println(device_address);
     center_y = analogRead(JOYSTICK_Y);
     center_x = analogRead(JOYSTICK_X);
-    radio.begin();                  //Starting the Wireless communication
+      // Setup and configure rf radio
+    if (!radio.begin()) {
+     Serial.println(F("radio hardware not responding!"));
+    while (true) {
+      // hold in an infinite loop
+    }
+  }
     radio.openWritingPipe(address); //Setting the address where we will send the data
     radio.setPALevel(RF24_PA_MAX);  //You can set it as minimum or maximum depending on the distance between the transmitter and receiver.
     radio.stopListening();          //This sets the module as transmitter
