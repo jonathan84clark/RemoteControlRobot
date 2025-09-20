@@ -1,5 +1,6 @@
 #include <EEPROM.h>
 #include "Motor.h"
+#include "Drive.h"
 #include <RF24.h>
 #include <nRF24L01.h>
 
@@ -7,25 +8,38 @@
 
 #define RADIO_CE 14
 #define RADIO_CSN 15
- 
+
+#define LEFT_FRONT_A 9
+#define LEFT_FRONT_B 10
+#define LEFT_REAR_A 7
+#define LEFT_REAR_B 8
+#define RIGHT_FRONT_A 5
+#define RIGHT_FRONT_B 6
+#define RIGHT_REAR_A 4
+#define RIGHT_REAR_B 3
+
 // Radio variables
 const byte address[6] = "99885";
 byte data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 byte paired_remote_addr = 0x00;
 bool controller_paired = false;
+bool lock_angle = false;
 long msTicks = 0;
 long timeoutTime = 0;
 boolean gettingData = false;
 
 RF24 radio(RADIO_CE, RADIO_CSN); // CE, CSN
 
-Motor motor1(10, 9, 1.0, 0.0);
-Motor motor2(8, 7, 1.0, 0.0);
-Motor motor3(6, 5, 1.0, 0.0);
-Motor motor4(3, 4, 1.0, 0.0);
+Motor leftFrontMotor(9, 10, 1.0, 0.0);
+Motor leftRearMotor(7, 8, 1.0, 0.0);
+Motor rightFrontMotor(5, 6, 1.0, 0.0);
+Motor rightRearMotor(4, 3, 1.0, 0.0);
+
+Drive drive(LEFT_FRONT_A, LEFT_FRONT_B, LEFT_REAR_A, LEFT_REAR_B, RIGHT_FRONT_A, RIGHT_FRONT_B, RIGHT_REAR_A, RIGHT_REAR_B);
 
 void setup() 
 {
+   Serial.begin(115200);
    byte last_remote_addr = 0;
    EEPROM.get(10, last_remote_addr);
    Serial.print("Last eeprom address: ");
@@ -51,7 +65,6 @@ void loop()
       byte sync_set = 0;
       byte remote_address = data[1];
       byte read_system_id = (data[0] & ~0x80);
-      Serial.println("Got data");
       // Once we pair we won't allow another pair until a reboot
       if ((data[0] & 0x80) == 0x80 && !controller_paired)
       {
@@ -83,21 +96,32 @@ void loop()
          }
          if (data[6] & 0x08)
          {
-            throttle = 1.0;
+            //throttle = 1.0;
          }
          else if (data[6] & 0x02)
          {
-            throttle = -1.0;
+            //throttle = -1.0;
          }
-         //if (!autoControl.GetEnabled())
-         //{
-         //   drive.ManualControl(throttle, yaw);
-         //}
+         if (data[6] & 0x10)
+         {
+            lock_angle = true;
+         }
+         else
+         {
+            lock_angle = false;
+         }
+         //Serial.println(data[6]);
+         drive.ManualControl(throttle, yaw, lock_angle);
          Serial.println("Data"); 
          gettingData = true;
          timeoutTime = msTicks + 500;
       }
       delay(5);
+   }
+   if (timeoutTime < msTicks)
+   {
+       drive.ManualControl(0.0, 0.0, false);
+       timeoutTime = msTicks + 500;
    }
 
 }
